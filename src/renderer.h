@@ -16,8 +16,7 @@ namespace GTR {
 
 	public:
 
-		//add here your functions
-		//...
+		std::vector<light_entity*> lights;
 
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);

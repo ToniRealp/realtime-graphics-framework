@@ -174,6 +174,7 @@ void GTR::PrefabEntity::renderInMenu()
 
 inline GTR::light_entity::light_entity()
 {
+	entity_type = LIGHT;
 	color.set(1, 1, 1);
 	intensity = 1;
 	max_distance = 1000;

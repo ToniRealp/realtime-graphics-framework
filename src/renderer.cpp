@@ -15,12 +15,25 @@ using namespace GTR;
 
 void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 {
+	lights.clear();
 	//set the clear color (the background color)
 	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
 
 	// Clear the color and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	checkGLErrors();
+
+	for (int i = 0; i < scene->entities.size(); ++i)
+	{
+		BaseEntity* ent = scene->entities[i];
+		if (!ent->visible)
+			continue;
+
+		if (ent->entity_type == LIGHT)
+		{
+			lights.push_back(dynamic_cast<GTR::light_entity*>(ent));
+		}
+	}
 
 	//render entities
 	for (int i = 0; i < scene->entities.size(); ++i)
@@ -87,6 +100,9 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 	//define locals to simplify coding
 	Shader* shader = NULL;
 	Texture* texture = NULL;
+	GTR::Scene* scene = GTR::Scene::instance;
+
+	int num_lights = lights.size();
 
 	texture = material->color_texture.texture;
 	//texture = material->emissive_texture;
@@ -113,7 +129,7 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
     assert(glGetError() == GL_NO_ERROR);
 
 	//chose a shader
-	shader = Shader::Get("texture");
+	shader = Shader::Get("light");
 
     assert(glGetError() == GL_NO_ERROR);
 
@@ -135,6 +151,14 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 
 	//this is used to say which is the alpha threshold to what we should not paint a pixel on the screen (to cut polygons according to texture alpha)
 	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
+
+	shader->setUniform("u_ambient_light",scene->ambient_light);
+
+	light_entity* light = lights[0];
+
+	shader->setUniform("u_light_color", light->color * light->intensity);
+	shader->setUniform("u_light_position", light->model * Vector3());
+
 
 	//do the draw call that renders the mesh into the screen
 	mesh->render(GL_TRIANGLES);
