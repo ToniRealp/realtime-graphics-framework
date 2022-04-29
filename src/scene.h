@@ -53,6 +53,26 @@ namespace GTR {
 		virtual void configure(cJSON* json);
 	};
 
+	enum light_type
+	{
+		point, spot, directional 
+	};
+
+	class light_entity : public BaseEntity
+	{
+	public:
+		Vector3 color;
+		float intensity;
+		int angle;
+		int max_distance;
+		light_type light_type;
+
+		light_entity();
+
+		void renderInMenu() override;
+		void configure(cJSON* json) override;
+	};
+	
 	//contains all entities of the scene
 	class Scene
 	{
