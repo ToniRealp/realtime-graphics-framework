@@ -43,5 +43,4 @@
 *.log
 *.pdb
 *.tlog
-
-/visualstudio
+*.exp
