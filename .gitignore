@@ -43,3 +43,5 @@
 *.log
 *.pdb
 *.tlog
+
+/visualstudio
