@@ -230,8 +230,6 @@ void main()
 	if(color.a < u_alpha_cutoff)
 		discard;
 
-	vec3 total_light = vec3(u_ambient_light);
-
 	vec3 L = u_light_position - v_world_position;
 	float distance = length(L);
 	L /= distance;
@@ -254,7 +252,10 @@ void main()
         }
     }
 
-	total_light += attenuation_factor * NdotL * u_light_color * spot_factor;
+    spot_factor = clamp(spot_factor, 0, 1);
+
+	vec3 total_light = attenuation_factor * NdotL * u_light_color * spot_factor;
+	total_light += vec3(u_ambient_light);
 
 	color.xyz *= total_light;
 

@@ -64,7 +64,7 @@
 			"intensity":10,
 			"max_dist":1000,
 			"cone_angle":45,
-			"cone_exp":60,
+			"cone_exp":25,
 			"light_type":"SPOT",
 			"cast_shadows": true,
 			"shadow_bias": 0.001
