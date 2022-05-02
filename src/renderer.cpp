@@ -113,13 +113,18 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 		texture = Texture::getWhiteTexture(); //a 1x1 white texture
 
 	//select the blending
+
 	if (material->alpha_mode == GTR::eAlphaMode::BLEND)
+	{
+		return;
+	}
+	/*if (material->alpha_mode == GTR::eAlphaMode::BLEND)
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else
-		glDisable(GL_BLEND);
+		glDisable(GL_BLEND);*/
 
 	//select if render both sides of the triangles
 	if(material->two_sided)
@@ -154,14 +159,36 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 
 	shader->setUniform("u_ambient_light",scene->ambient_light);
 
-	light_entity* light = lights[0];
+	glDepthFunc(GL_LEQUAL);
+	/*glDisable(GL_BLEND);*/
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	shader->setUniform("u_light_color", light->color * light->intensity);
-	shader->setUniform("u_light_position", light->model * Vector3());
+	if (!num_lights)
+	{
+		shader->setUniform("u_light_color", Vector3());
+		shader->setUniform("u_light_position", Vector3());
 
 
-	//do the draw call that renders the mesh into the screen
-	mesh->render(GL_TRIANGLES);
+		mesh->render(GL_TRIANGLES);
+	}else
+	{
+		for (auto light : lights)
+		{
+			shader->setUniform("u_light_color", light->color * light->intensity);
+			shader->setUniform("u_light_position", light->model * Vector3());
+			shader->setUniform("u_light_max_distance", light->max_distance);
+
+
+			//do the draw call that renders the mesh into the screen
+			mesh->render(GL_TRIANGLES);
+			glEnable(GL_BLEND);
+			shader->setUniform("u_ambient_light", Vector3());
+		}	
+	}
+
+	
+	glDisable(GL_BLEND);
+	glDepthFunc(GL_LESS);
 
 	//disable shader
 	shader->disable();

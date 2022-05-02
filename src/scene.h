@@ -64,7 +64,7 @@ namespace GTR {
 		Vector3 color;
 		float intensity;
 		int angle;
-		int max_distance;
+		float max_distance;
 		light_type light_type;
 
 		light_entity();

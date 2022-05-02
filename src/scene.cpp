@@ -214,5 +214,6 @@ void GTR::light_entity::renderInMenu()
 
 	ImGui::Text("Light type: ", light_type_str);
 	ImGui::ColorEdit3("Color", color.v);
-	ImGui::DragFloat("Intensity", &intensity);
+	ImGui::DragFloat("Intensity", &intensity, 0.1f);
+	ImGui::DragFloat("Distance", &max_distance, 1.0f);
 }
