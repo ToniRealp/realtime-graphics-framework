@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+#include <algorithm>
+
 #include "camera.h"
 #include "shader.h"
 #include "mesh.h"
@@ -16,6 +18,7 @@ using namespace GTR;
 void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 {
 	lights.clear();
+	render_calls.clear();
 	//set the clear color (the background color)
 	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
 
@@ -23,9 +26,11 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	checkGLErrors();
 
+	//render entities
 	for (int i = 0; i < scene->entities.size(); ++i)
 	{
 		BaseEntity* ent = scene->entities[i];
+
 		if (!ent->visible)
 			continue;
 
@@ -33,22 +38,37 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 		{
 			lights.push_back(dynamic_cast<GTR::light_entity*>(ent));
 		}
-	}
-
-	//render entities
-	for (int i = 0; i < scene->entities.size(); ++i)
-	{
-		BaseEntity* ent = scene->entities[i];
-		if (!ent->visible)
-			continue;
-
-		//is a prefab!
-		if (ent->entity_type == PREFAB)
+		else if (ent->entity_type == PREFAB)
 		{
-			PrefabEntity* pent = (GTR::PrefabEntity*)ent;
+			const auto pent = dynamic_cast<GTR::PrefabEntity*>(ent);
 			if(pent->prefab)
 				renderPrefab(ent->model, pent->prefab, camera);
 		}
+	}
+
+	std::sort(render_calls.begin(), render_calls.end(), [](render_call lhs, render_call rhs)
+		{
+			if (lhs.material->alpha_mode == GTR::eAlphaMode::NO_ALPHA && rhs.material->alpha_mode == GTR::eAlphaMode::NO_ALPHA)
+			{
+				return lhs.distance_to_camera < rhs.distance_to_camera;
+			}
+			else if(lhs.material->alpha_mode == GTR::eAlphaMode::NO_ALPHA && rhs.material->alpha_mode == GTR::eAlphaMode::BLEND)
+			{
+				return true;
+			}
+			else if (lhs.material->alpha_mode == GTR::eAlphaMode::BLEND && rhs.material->alpha_mode == GTR::eAlphaMode::NO_ALPHA)
+			{
+				return false;
+			}
+			else
+			{
+				return lhs.distance_to_camera < rhs.distance_to_camera;
+			}
+		});
+
+	for (const auto& rc : render_calls)
+	{
+		renderMeshWithMaterial(rc.model, rc.mesh, rc.material, camera);
 	}
 }
 
@@ -79,7 +99,7 @@ void Renderer::renderNode(const Matrix44& prefab_model, GTR::Node* node, Camera*
 		if (camera->testBoxInFrustum(world_bounding.center, world_bounding.halfsize) )
 		{
 			//render node mesh
-			renderMeshWithMaterial( node_model, node->mesh, node->material, camera );
+			createRenderCall( node_model, node->mesh, node->material, camera );
 			//node->mesh->renderBounding(node_model, true);
 		}
 	}
@@ -87,6 +107,14 @@ void Renderer::renderNode(const Matrix44& prefab_model, GTR::Node* node, Camera*
 	//iterate recursively with children
 	for (int i = 0; i < node->children.size(); ++i)
 		renderNode(prefab_model, node->children[i], camera);
+}
+
+
+void Renderer::createRenderCall(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera)
+{
+	Vector3 node_position = model * Vector3();
+	float distance = node_position.distance(camera->eye);
+	render_calls.emplace_back(mesh, material, model, distance);
 }
 
 //renders a mesh given its transform and material
@@ -112,19 +140,13 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 	if (texture == NULL)
 		texture = Texture::getWhiteTexture(); //a 1x1 white texture
 
-	//select the blending
-
 	if (material->alpha_mode == GTR::eAlphaMode::BLEND)
-	{
-		return;
-	}
-	/*if (material->alpha_mode == GTR::eAlphaMode::BLEND)
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else
-		glDisable(GL_BLEND);*/
+		glDisable(GL_BLEND);
 
 	//select if render both sides of the triangles
 	if(material->two_sided)

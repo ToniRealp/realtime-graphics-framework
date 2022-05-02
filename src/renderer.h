@@ -5,6 +5,7 @@
 class Camera;
 
 namespace GTR {
+	class render_call;
 
 	class Prefab;
 	class Material;
@@ -17,6 +18,7 @@ namespace GTR {
 	public:
 
 		std::vector<light_entity*> lights;
+		std::vector<render_call> render_calls;
 
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
@@ -26,9 +28,29 @@ namespace GTR {
 
 		//to render one node from the prefab and its children
 		void renderNode(const Matrix44& model, GTR::Node* node, Camera* camera);
+		void createRenderCall(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 
 		//to render one mesh given its material and transformation matrix
 		void renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
+	};
+
+	class render_call
+	{
+	public:
+		Mesh* mesh{};
+		Material* material{};
+		Matrix44 model;
+		float distance_to_camera{};
+
+		render_call() = default;
+
+		render_call(Mesh* const mesh, Material* const material, const Matrix44& model, const float distance_to_camera)
+			: mesh(mesh),
+			  material(material),
+			  model(model),
+			  distance_to_camera(distance_to_camera)
+		{
+		}
 	};
 
 	Texture* CubemapFromHDRE(const char* filename);
