@@ -11,8 +11,28 @@ class cJSON;
 
 //our namespace
 namespace GTR {
+	class BaseEntity;
 
+	class Scene
+	{
+	public:
+		static Scene* instance;
 
+		Vector3 background_color;
+		Vector3 ambient_light;
+		Camera main_camera;
+
+		Scene();
+
+		std::string filename;
+		std::vector<BaseEntity*> entities;
+
+		void clear();
+		void addEntity(BaseEntity* entity);
+
+		bool load(const char* filename);
+		BaseEntity* createEntity(std::string type);
+	};
 
 	enum eEntityType {
 		NONE = 0,
@@ -23,7 +43,6 @@ namespace GTR {
 		DECALL = 5
 	};
 
-	class Scene;
 	class Prefab;
 
 	//represents one element of the scene (could be lights, prefabs, cameras, etc)
@@ -66,33 +85,14 @@ namespace GTR {
 		int angle;
 		float max_distance;
 		light_type light_type;
+		bool cast_shadows;
+		float cone_angle;
+		float cone_exp;
 
 		light_entity();
 
 		void renderInMenu() override;
 		void configure(cJSON* json) override;
-	};
-	
-	//contains all entities of the scene
-	class Scene
-	{
-	public:
-		static Scene* instance;
-
-		Vector3 background_color;
-		Vector3 ambient_light;
-		Camera main_camera;
-
-		Scene();
-
-		std::string filename;
-		std::vector<BaseEntity*> entities;
-
-		void clear();
-		void addEntity(BaseEntity* entity);
-
-		bool load(const char* filename);
-		BaseEntity* createEntity(std::string type);
 	};
 
 };

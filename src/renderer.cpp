@@ -166,15 +166,15 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 	shader->enable();
 
 	//upload uniforms
+	float t = getTime();
+
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
 	shader->setUniform("u_camera_position", camera->eye);
 	shader->setUniform("u_model", model );
-	float t = getTime();
 	shader->setUniform("u_time", t );
 
 	shader->setUniform("u_color", material->color);
-	if(texture)
-		shader->setUniform("u_texture", texture, 0);
+	if(texture) shader->setUniform("u_texture", texture, 0);
 
 	//this is used to say which is the alpha threshold to what we should not paint a pixel on the screen (to cut polygons according to texture alpha)
 	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
@@ -182,7 +182,6 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 	shader->setUniform("u_ambient_light",scene->ambient_light);
 
 	glDepthFunc(GL_LEQUAL);
-	/*glDisable(GL_BLEND);*/
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	if (!num_lights)
@@ -194,11 +193,17 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 		mesh->render(GL_TRIANGLES);
 	}else
 	{
-		for (auto light : lights)
+		for (const auto &light : lights)
 		{
+			shader->setUniform("u_light_type", light->light_type);
+
 			shader->setUniform("u_light_color", light->color * light->intensity);
 			shader->setUniform("u_light_position", light->model * Vector3());
 			shader->setUniform("u_light_max_distance", light->max_distance);
+
+			shader->setUniform("u_light_cone_angle", static_cast<float>(cos(light->cone_angle * DEG2RAD)));
+			shader->setUniform("u_light_exp", light->cone_exp);
+			shader->setUniform("u_light_direction", light->model.rotateVector(Vector3(0, 0, -1)));
 
 
 			//do the draw call that renders the mesh into the screen

@@ -178,6 +178,9 @@ inline GTR::light_entity::light_entity()
 	color.set(1, 1, 1);
 	intensity = 1;
 	max_distance = 1000;
+	cast_shadows = false;
+	cone_angle = 0;
+	cone_exp = 0;
 }
 
 void GTR::light_entity::configure(cJSON* json)
@@ -186,6 +189,9 @@ void GTR::light_entity::configure(cJSON* json)
 	color = readJSONVector3(json, "color", color);
 	intensity = readJSONNumber(json, "intensity", intensity);
 	max_distance = readJSONNumber(json, "max_dist", max_distance);
+	cone_angle = readJSONNumber(json, "cone_angle", cone_angle);
+	cone_exp = readJSONNumber(json, "cone_exp", cone_exp);
+	cast_shadows = readJSONBool(json, "cast_shadows", false);
 	std::string raw_light_type = readJSONString(json, "light_type", "");
 	if (raw_light_type == "POINT")
 		light_type = point;
@@ -193,6 +199,7 @@ void GTR::light_entity::configure(cJSON* json)
 		light_type = spot;
 	else if (raw_light_type == "DIRECTIONAL")
 		light_type = directional;
+
 }
 
 void GTR::light_entity::renderInMenu()
@@ -212,8 +219,10 @@ void GTR::light_entity::renderInMenu()
 	default: ;
 	}
 
-	ImGui::Text("Light type: ", light_type_str);
+	ImGui::Text("Light type: ", &light_type_str);
 	ImGui::ColorEdit3("Color", color.v);
 	ImGui::DragFloat("Intensity", &intensity, 0.1f);
 	ImGui::DragFloat("Distance", &max_distance, 1.0f);
+	ImGui::DragFloat("Cone angle", &cone_angle, 1.0f);
+	ImGui::DragFloat("Cone exp", &cone_exp, 1.0f);
 }
