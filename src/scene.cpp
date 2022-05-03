@@ -181,6 +181,10 @@ inline GTR::light_entity::light_entity()
 	cast_shadows = false;
 	cone_angle = 0;
 	cone_exp = 0;
+	fbo = nullptr;
+	shadowmap = nullptr;
+	camera = nullptr;
+	shadow_bias = 0;
 }
 
 void GTR::light_entity::configure(cJSON* json)
@@ -192,6 +196,7 @@ void GTR::light_entity::configure(cJSON* json)
 	cone_angle = readJSONNumber(json, "cone_angle", cone_angle);
 	cone_exp = readJSONNumber(json, "cone_exp", cone_exp);
 	cast_shadows = readJSONBool(json, "cast_shadows", false);
+	shadow_bias = readJSONNumber(json, "shadow_bias", shadow_bias);
 	std::string raw_light_type = readJSONString(json, "light_type", "");
 	if (raw_light_type == "POINT")
 		light_type = point;
@@ -219,10 +224,12 @@ void GTR::light_entity::renderInMenu()
 	default: ;
 	}
 
-	ImGui::Text("Light type: ", &light_type_str);
+	ImGui::Text("Light type: %s", light_type_str.c_str());
 	ImGui::ColorEdit3("Color", color.v);
 	ImGui::DragFloat("Intensity", &intensity, 0.1f);
 	ImGui::DragFloat("Distance", &max_distance, 1.0f);
 	ImGui::DragFloat("Cone angle", &cone_angle, 1.0f);
 	ImGui::DragFloat("Cone exp", &cone_exp, 1.0f);
+	ImGui::DragFloat("Shadow bias", &shadow_bias, 0.0001f);
+	ImGui::Checkbox("Cast shadows", &cast_shadows);
 }

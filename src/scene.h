@@ -5,6 +5,8 @@
 #include "camera.h"
 #include <string>
 
+#include "texture.h"
+
 //forward declaration
 class cJSON; 
 
@@ -88,6 +90,11 @@ namespace GTR {
 		bool cast_shadows;
 		float cone_angle;
 		float cone_exp;
+		float shadow_bias;
+
+		FBO* fbo;
+		Texture* shadowmap;
+		Camera* camera;
 
 		light_entity();
 

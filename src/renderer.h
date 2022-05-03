@@ -22,16 +22,19 @@ namespace GTR {
 
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
-	
+		void show_shadowmap(light_entity* light);
+
 		//to render a whole prefab (with all its nodes)
 		void renderPrefab(const Matrix44& model, GTR::Prefab* prefab, Camera* camera);
 
 		//to render one node from the prefab and its children
 		void renderNode(const Matrix44& model, GTR::Node* node, Camera* camera);
-		void createRenderCall(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
+		void createRenderCall(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera, BoundingBox world_bounding);
 
 		//to render one mesh given its material and transformation matrix
 		void renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
+		void render_flat_mesh(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
+		void generate_shadow_map(light_entity* light);
 	};
 
 	class render_call
@@ -41,16 +44,20 @@ namespace GTR {
 		Material* material{};
 		Matrix44 model;
 		float distance_to_camera{};
+		BoundingBox world_bounding;
 
-		render_call() = default;
-
-		render_call(Mesh* const mesh, Material* const material, const Matrix44& model, const float distance_to_camera)
+		render_call(Mesh* const mesh, Material* const material, const Matrix44& model, const float distance_to_camera,
+			const BoundingBox& world_bounding)
 			: mesh(mesh),
 			  material(material),
 			  model(model),
-			  distance_to_camera(distance_to_camera)
+			  distance_to_camera(distance_to_camera),
+			  world_bounding(world_bounding)
 		{
 		}
+
+		render_call() = default;
+
 	};
 
 	Texture* CubemapFromHDRE(const char* filename);
