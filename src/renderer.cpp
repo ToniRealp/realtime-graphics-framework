@@ -16,6 +16,7 @@
 
 
 using namespace GTR;
+bool Renderer::use_single_pass = false;
 
 void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 {
@@ -78,9 +79,15 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 
 	for (const auto& rc : render_calls)
 	{
+		
 		if (camera->testBoxInFrustum(rc.world_bounding.center, rc.world_bounding.halfsize))
-			//renderMeshWithMaterial(rc.model, rc.mesh, rc.material, camera);
-			render_mesh_with_material_single_pass(rc.model, rc.mesh, rc.material, camera);
+			if(use_single_pass)
+			{
+				render_mesh_with_material_single_pass(rc.model, rc.mesh, rc.material, camera);
+			}else
+			{
+				renderMeshWithMaterial(rc.model, rc.mesh, rc.material, camera);
+			}
 	}
 
 	//glViewport(0, 0, 256, 256);
@@ -324,7 +331,8 @@ inline void Renderer::render_mesh_with_material_single_pass(const Matrix44& mode
 	float lights_cone_exp[max_lights];
 	Vector3 lights_direction[max_lights];
 
-	int ligths_cast_shadow[max_lights];
+	int lights_cast_shadow[max_lights];
+
 
 	for (int i=0; i<lights.size(); i++)
 	{
@@ -353,16 +361,7 @@ inline void Renderer::render_mesh_with_material_single_pass(const Matrix44& mode
 	shader->setUniform3Array("u_lights_direction", reinterpret_cast<float*>(&lights_direction), max_lights);
 
 
-	/*if (light->shadowmap)
-	{
-		shader->setUniform("u_light_casts_shadows", 1);
-		shader->setUniform("u_light_shadowmap", light->shadowmap, 8);
-		shader->setUniform("u_shadow_viewproj", light->camera->viewprojection_matrix);
-		shader->setUniform("u_shadow_bias", light->shadow_bias);
-
-	}
-	else*/
-		shader->setUniform("u_light_casts_shadows", 0);
+	shader->setUniform("u_light_casts_shadows", 0);
 
 	mesh->render(GL_TRIANGLES);
 	glEnable(GL_BLEND);

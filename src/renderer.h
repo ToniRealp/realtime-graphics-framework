@@ -16,6 +16,7 @@ namespace GTR {
 	{
 
 	public:
+		static bool use_single_pass;
 
 		std::vector<light_entity*> lights;
 		std::vector<render_call> render_calls;

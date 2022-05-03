@@ -1,18 +1,19 @@
-﻿  renderer.cpp
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\extra\cJSON.h(104,1): warning C4099: 'cJSON': type name first seen using 'class' now seen using 'struct'
+﻿  application.cpp
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\scene.h(11,12): warning C4099: 'cJSON': type name first seen using 'struct' now seen using 'class'
 C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\extra\cJSON.h(103): message : see declaration of 'cJSON'
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(32,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(125,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(187,10): warning C4244: 'initializing': conversion from 'long' to 'float', possible loss of data
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(297,10): warning C4244: 'initializing': conversion from 'long' to 'float', possible loss of data
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(329,17): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\renderer.cpp(327,6): warning C4101: 'ligths_cast_shadow': unreferenced local variable
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(119,14): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(120,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(136,55): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(138,55): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(260,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(353,36): warning C4244: '*=': conversion from 'double' to 'float', possible loss of data
+C:\Users\tonir\Documents\repos\realtime-graphics-framework\src\application.cpp(355,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
      Creating library ..\..\framework.lib and object ..\..\framework.exp
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  1 of 4534 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+  8 of 4535 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    50 functions had inline decision re-evaluated but remain unchanged
+    49 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
 LINK : warning LNK4286: symbol '___glewDeleteBuffers' defined in 'glew32s.lib(glew.obj)' is imported by 'imgui_impl_opengl3.obj'
 LINK : warning LNK4286: symbol '___glewLinkProgram' defined in 'glew32s.lib(glew.obj)' is imported by 'imgui_impl_opengl3.obj'
