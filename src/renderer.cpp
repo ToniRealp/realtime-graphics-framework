@@ -79,7 +79,8 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 	for (const auto& rc : render_calls)
 	{
 		if (camera->testBoxInFrustum(rc.world_bounding.center, rc.world_bounding.halfsize))
-			renderMeshWithMaterial(rc.model, rc.mesh, rc.material, camera);
+			//renderMeshWithMaterial(rc.model, rc.mesh, rc.material, camera);
+			render_mesh_with_material_single_pass(rc.model, rc.mesh, rc.material, camera);
 	}
 
 	//glViewport(0, 0, 256, 256);
@@ -244,6 +245,140 @@ void Renderer::renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Mat
 	glDisable(GL_BLEND);
 }
 
+inline void Renderer::render_mesh_with_material_single_pass(const Matrix44& model, Mesh* mesh, Material* material,
+	Camera* camera)
+{
+	//in case there is nothing to do
+	if (!mesh || !mesh->getNumVertices() || !material)
+		return;
+	assert(glGetError() == GL_NO_ERROR);
+
+	//define locals to simplify coding
+	Shader* shader = nullptr;
+	Texture* texture = nullptr;
+	const GTR::Scene* scene = GTR::Scene::instance;
+
+	const int num_lights = lights.size();
+
+	texture = material->color_texture.texture;
+	//texture = material->emissive_texture;
+	//texture = material->metallic_roughness_texture;
+	//texture = material->normal_texture;
+	//texture = material->occlusion_texture;
+	if (texture == nullptr)
+		texture = Texture::getWhiteTexture(); //a 1x1 white texture
+
+	if (material->alpha_mode == GTR::eAlphaMode::BLEND)
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else
+		glDisable(GL_BLEND);
+
+	//select if render both sides of the triangles
+	if (material->two_sided)
+		glDisable(GL_CULL_FACE);
+	else
+		glEnable(GL_CULL_FACE);
+	assert(glGetError() == GL_NO_ERROR);
+
+	//chose a shader
+	shader = Shader::Get("single");
+
+	assert(glGetError() == GL_NO_ERROR);
+
+	//no shader? then nothing to render
+	if (!shader)
+		return;
+	shader->enable();
+
+	//upload uniforms
+	float t = getTime();
+
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_camera_position", camera->eye);
+	shader->setUniform("u_model", model);
+	shader->setUniform("u_time", t);
+
+	shader->setUniform("u_color", material->color);
+	if (texture) shader->setUniform("u_texture", texture, 0);
+
+	//this is used to say which is the alpha threshold to what we should not paint a pixel on the screen (to cut polygons according to texture alpha)
+	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
+
+	shader->setUniform("u_ambient_light", scene->ambient_light);
+
+	//glDepthFunc(GL_LEQUAL);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	constexpr int max_lights = 5;
+
+	int lights_type[max_lights];
+
+	Vector3 lights_position[max_lights];
+	Vector3 lights_color[max_lights];
+	float lights_max_distance[max_lights];
+
+	float lights_cone_angle[max_lights];
+	float lights_cone_exp[max_lights];
+	Vector3 lights_direction[max_lights];
+
+	int ligths_cast_shadow[max_lights];
+
+	for (int i=0; i<lights.size(); i++)
+	{
+		light_entity* light = lights[i];
+		lights_type[i] = light->light_type;
+
+		lights_color[i] = light->color * light->intensity;
+		lights_position[i] = light->model * Vector3();
+		lights_max_distance[i] = light->max_distance;
+
+		lights_cone_angle[i] = static_cast<float>(cos(light->cone_angle * DEG2RAD));
+		lights_cone_exp[i] = light->cone_exp;
+		lights_direction[i] = light->model.rotateVector(Vector3(0, 0, 1));
+	}
+
+	shader->setUniform("num_lights", static_cast<int>(lights.size()));
+
+	shader->setUniform1Array("u_lights_type",reinterpret_cast<int*>(&lights_type), max_lights);
+
+	shader->setUniform3Array("u_lights_color",(float*) & lights_color, max_lights);
+	shader->setUniform3Array("u_lights_position", (float*)&lights_position, max_lights);
+	shader->setUniform1Array("u_lights_max_distance", (float*)&lights_max_distance, max_lights);
+
+	shader->setUniform1Array("u_lights_cone_angle", reinterpret_cast<float*>(&lights_cone_angle), max_lights);
+	shader->setUniform1Array("u_lights_exp", reinterpret_cast<float*>(&lights_cone_exp), max_lights);
+	shader->setUniform3Array("u_lights_direction", reinterpret_cast<float*>(&lights_direction), max_lights);
+
+
+	/*if (light->shadowmap)
+	{
+		shader->setUniform("u_light_casts_shadows", 1);
+		shader->setUniform("u_light_shadowmap", light->shadowmap, 8);
+		shader->setUniform("u_shadow_viewproj", light->camera->viewprojection_matrix);
+		shader->setUniform("u_shadow_bias", light->shadow_bias);
+
+	}
+	else*/
+		shader->setUniform("u_light_casts_shadows", 0);
+
+	mesh->render(GL_TRIANGLES);
+	glEnable(GL_BLEND);
+	shader->setUniform("u_ambient_light", Vector3());
+
+
+	glDisable(GL_BLEND);
+	glDepthFunc(GL_LESS);
+
+	//disable shader
+	shader->disable();
+
+	//set the render state as it was before to avoid problems with future renders
+	glDisable(GL_BLEND);
+}
+
 void Renderer::render_flat_mesh(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera)
 {
 	//in case there is nothing to do
@@ -253,14 +388,6 @@ void Renderer::render_flat_mesh(const Matrix44 model, Mesh* mesh, GTR::Material*
 
 	//define locals to simplify coding
 	Shader* shader;
-
-	if (material->alpha_mode == GTR::eAlphaMode::BLEND)
-	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-	else
-		glDisable(GL_BLEND);
 
 	//select if render both sides of the triangles
 	if (material->two_sided)
@@ -288,12 +415,12 @@ void Renderer::render_flat_mesh(const Matrix44 model, Mesh* mesh, GTR::Material*
 	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
 
 
+	glDepthFunc(GL_LESS);
+	glDisable(GL_BLEND);
 	mesh->render(GL_TRIANGLES);
 
 	//disable shader
 	shader->disable();
-
-	glDisable(GL_BLEND);
 }
 
 

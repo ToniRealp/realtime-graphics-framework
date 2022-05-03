@@ -4,6 +4,7 @@ texture basic.vs texture.fs
 light basic.vs light.fs
 depth quad.vs depth.fs
 multi basic.vs multi.fs
+single basic.vs light_single_pass.fs
 
 \basic.vs
 
@@ -298,6 +299,124 @@ void main()
     }
 
 	total_light += attenuation_factor * NdotL * u_light_color * spot_factor * shadow_factor;
+
+	color.xyz *= total_light;
+
+
+	FragColor = color;
+}
+
+\light_single_pass.fs
+
+#version 330 core
+
+in vec3 v_position;
+in vec3 v_world_position;
+in vec3 v_normal;
+in vec2 v_uv;
+in vec4 v_color;
+
+uniform vec4 u_color;
+uniform sampler2D u_texture;
+uniform float u_time;
+uniform float u_alpha_cutoff;
+
+const int max_lights = 5;
+
+uniform vec3 u_ambient_light;
+
+uniform int num_lights;
+
+uniform int u_lights_type[max_lights];
+uniform vec3 u_lights_color[max_lights];
+uniform vec3 u_lights_position[max_lights];
+uniform float u_lights_max_distance[max_lights];
+
+uniform vec3 u_lights_direction[max_lights];
+uniform float u_lights_cone_angle[max_lights];
+uniform float u_lights_exp[max_lights];
+
+uniform int u_light_casts_shadows;
+uniform sampler2D u_light_shadowmap;
+uniform mat4 u_shadow_viewproj;
+uniform float u_shadow_bias;
+
+out vec4 FragColor;
+
+float testShadowmap(vec3 pos)
+{
+    //project our 3D position to the shadowmap
+    vec4 proj_pos = u_shadow_viewproj * vec4(pos,1.0);
+
+    //from homogeneus space to clip space
+    vec2 shadow_uv = proj_pos.xy / proj_pos.w;
+
+    //from clip space to uv space
+    shadow_uv = shadow_uv * 0.5 + vec2(0.5);
+
+    //get point depth [-1 .. +1] in non-linear space
+    float real_depth = (proj_pos.z - u_shadow_bias) / proj_pos.w;
+
+    //normalize from [-1..+1] to [0..+1] still non-linear
+    real_depth = real_depth * 0.5 + 0.5;
+
+    //read depth from depth buffer in [0..+1] non-linear
+    float shadow_depth = texture( u_light_shadowmap, shadow_uv).x;
+
+    //compute final shadow factor by comparing
+    float shadow_factor = 1.0;
+
+    //we can compare them, even if they are not linear
+    if( shadow_depth < real_depth )
+        shadow_factor = 0.0;
+
+    return shadow_factor;
+}
+
+void main()
+{
+	vec3 N = normalize(v_normal);
+	vec2 uv = v_uv;
+	vec4 color = u_color;
+	color *= texture( u_texture, v_uv );
+
+	if(color.a < u_alpha_cutoff)
+		discard;
+
+    vec3 total_light = vec3(u_ambient_light);
+
+   for(int i = 0; i<num_lights; i++){
+
+           vec3 L = u_lights_position[i] - v_world_position;
+           float distance = length(L);
+           L /= distance;
+
+           float attenuation_factor = u_lights_max_distance[i] - distance;
+           attenuation_factor /= u_lights_max_distance[i];
+           attenuation_factor = max(attenuation_factor, 0.0);
+
+           float NdotL = clamp(dot(N,L), 0.0, 1.0);
+
+           float spot_factor = 1.0;
+
+           if(u_lights_type[i] == 1){
+               float spot_cosine = dot(L, u_lights_direction[i]);
+               if(spot_cosine >= u_lights_cone_angle[i])
+               {
+                   spot_factor = pow(spot_cosine, u_lights_exp[i]);
+               }
+               else{
+                   spot_factor = 0.0;
+               }
+           }
+
+           spot_factor = clamp(spot_factor, 0.0, 1.0);
+
+           total_light += attenuation_factor * NdotL * u_lights_color[i] * spot_factor;
+       }
+
+
+
 
 	color.xyz *= total_light;
 
