@@ -27,6 +27,27 @@
 			"angle":200
 		},
 		{
+			"name":"car3",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-315,0,-31],
+			"angle":-90
+		},
+		{
+			"name":"car4",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-315,0,151],
+			"angle":-90
+		},
+		{
+			"name":"car5",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-365,0,462],
+			"angle":-150
+		},
+		{
 			"name":"house",
 			"type":"PREFAB",
 			"filename":"prefabs/house_test/scene.gltf",
@@ -70,6 +91,20 @@
 			"shadow_bias": 0.001
 		},
 		{
+			"name":"spot2",
+			"type":"LIGHT",
+			"position":[-315,36,371],
+			"angle": 35,
+			"color":[1,0.9,0.8],
+			"intensity":10,
+			"max_dist":1000,
+			"cone_angle":45,
+			"cone_exp":25,
+			"light_type":"SPOT",
+			"cast_shadows": true,
+			"shadow_bias": 0.001
+		},
+		{
 			"name":"pointlight",
 			"type":"LIGHT",
 			"position":[-187,38,-156],
@@ -83,6 +118,26 @@
 			"name":"pointlight2",
 			"type":"LIGHT",
 			"position":[-131,38,-205],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":2.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight3",
+			"type":"LIGHT",
+			"position":[-460,46,556],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":2.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight4",
+			"type":"LIGHT",
+			"position":[-400,46,588],
 			"angle": 0,
 			"color":[1,0.2,0.1],
 			"intensity":2.5,
