@@ -39,7 +39,7 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 
 		if (ent->entity_type == LIGHT)
 		{
-			lights.push_back(dynamic_cast<GTR::light_entity*>(ent));
+			lights.push_back(dynamic_cast<GTR::LightEntity*>(ent));
 		}
 		else if (ent->entity_type == PREFAB)
 		{
@@ -95,7 +95,7 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 	//glViewport(0, 0, Application::instance->window_width, Application::instance->window_height);
 }
 
-void GTR::Renderer::show_shadowmap(light_entity* light)
+void GTR::Renderer::show_shadowmap(LightEntity* light)
 {
 	Shader* shader = Shader::getDefaultShader("depth");
 	shader->enable();
@@ -336,7 +336,7 @@ inline void Renderer::render_mesh_with_material_single_pass(const Matrix44& mode
 
 	for (int i=0; i<lights.size(); i++)
 	{
-		light_entity* light = lights[i];
+		LightEntity* light = lights[i];
 		lights_type[i] = light->light_type;
 
 		lights_color[i] = light->color * light->intensity;
@@ -449,7 +449,7 @@ Texture* GTR::CubemapFromHDRE(const char* filename)
 	return texture;
 }
 
-void GTR::Renderer::generate_shadow_map(light_entity* light)
+void GTR::Renderer::generate_shadow_map(LightEntity* light)
 {
 	if (light->light_type != spot)
 		return;

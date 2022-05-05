@@ -3,6 +3,7 @@
 
 #include "prefab.h"
 #include "extra/cJSON.h"
+#include "extra/imgui/imgui.h"
 
 GTR::Scene* GTR::Scene::instance = NULL;
 
@@ -128,7 +129,7 @@ GTR::BaseEntity* GTR::Scene::createEntity(std::string type)
 	if (type == "PREFAB")
 		return new GTR::PrefabEntity();
 	else if (type == "LIGHT")
-		return new GTR::light_entity();
+		return new GTR::LightEntity();
 	return NULL;
 }
 
@@ -172,7 +173,7 @@ void GTR::PrefabEntity::renderInMenu()
 #endif
 }
 
-inline GTR::light_entity::light_entity()
+inline GTR::LightEntity::LightEntity()
 {
 	entity_type = LIGHT;
 	color.set(1, 1, 1);
@@ -187,7 +188,7 @@ inline GTR::light_entity::light_entity()
 	shadow_bias = 0;
 }
 
-void GTR::light_entity::configure(cJSON* json)
+void GTR::LightEntity::configure(cJSON* json)
 {
 	BaseEntity::configure(json);
 	color = readJSONVector3(json, "color", color);
@@ -207,7 +208,7 @@ void GTR::light_entity::configure(cJSON* json)
 
 }
 
-void GTR::light_entity::renderInMenu()
+void GTR::LightEntity::renderInMenu()
 {
 	BaseEntity::renderInMenu();
 

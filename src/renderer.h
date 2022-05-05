@@ -18,13 +18,13 @@ namespace GTR {
 	public:
 		static bool use_single_pass;
 
-		std::vector<light_entity*> lights;
+		std::vector<LightEntity*> lights;
 		std::vector<render_call> render_calls;
 
 		
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
-		void show_shadowmap(light_entity* light);
+		void show_shadowmap(LightEntity* light);
 
 		//to render a whole prefab (with all its nodes)
 		void renderPrefab(const Matrix44& model, GTR::Prefab* prefab, Camera* camera);
@@ -37,7 +37,7 @@ namespace GTR {
 		void renderMeshWithMaterial(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 		void render_mesh_with_material_single_pass(const Matrix44& model, Mesh* mesh, Material* material, Camera* camera);
 		void render_flat_mesh(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
-		void generate_shadow_map(light_entity* light);
+		void generate_shadow_map(LightEntity* light);
 	};
 
 	class render_call

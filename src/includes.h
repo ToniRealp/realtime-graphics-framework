@@ -30,9 +30,14 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#define USE_GLEW
+#define GLEW_STATIC
+
+#pragma comment(lib, "glew32s.lib")
+
+#include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-
 
 
 //GLUT

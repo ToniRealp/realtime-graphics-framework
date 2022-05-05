@@ -90,6 +90,7 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 void renderDebug(SDL_Window* window, Application * app)
 {
 	#ifndef SKIP_IMGUI
+    ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.MousePos.x = Input::mouse_position.x;
 	io.MousePos.y = Input::mouse_position.y;
@@ -231,7 +232,7 @@ int main(int argc, char **argv)
 	//tm.addTask(t);
 
 	//create the application window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h)
-	SDL_Window*window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
+	SDL_Window* window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
 	if (!window)
 		return 0;
 	int window_width, window_height;

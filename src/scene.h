@@ -74,19 +74,19 @@ namespace GTR {
 		virtual void configure(cJSON* json);
 	};
 
-	enum light_type
+	enum LightType
 	{
 		point, spot, directional 
 	};
 
-	class light_entity : public BaseEntity
+	class LightEntity : public BaseEntity
 	{
 	public:
 		Vector3 color;
 		float intensity;
 		int angle;
 		float max_distance;
-		light_type light_type;
+		LightType light_type;
 		bool cast_shadows;
 		float cone_angle;
 		float cone_exp;
@@ -96,7 +96,7 @@ namespace GTR {
 		Texture* shadowmap;
 		Camera* camera;
 
-		light_entity();
+		LightEntity();
 
 		void renderInMenu() override;
 		void configure(cJSON* json) override;
