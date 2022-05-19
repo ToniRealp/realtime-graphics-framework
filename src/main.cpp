@@ -90,7 +90,6 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 void renderDebug(SDL_Window* window, Application * app)
 {
 	#ifndef SKIP_IMGUI
-    ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.MousePos.x = Input::mouse_position.x;
 	io.MousePos.y = Input::mouse_position.y;
