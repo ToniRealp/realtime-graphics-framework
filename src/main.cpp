@@ -114,6 +114,7 @@ void renderDebug(SDL_Window* window, Application * app)
 	ImGui::Render();
 	glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	glGetError();
 	#endif
 }
 
@@ -231,7 +232,7 @@ int main(int argc, char **argv)
 	//tm.addTask(t);
 
 	//create the application window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h)
-	SDL_Window* window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
+	SDL_Window*window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
 	if (!window)
 		return 0;
 	int window_width, window_height;
