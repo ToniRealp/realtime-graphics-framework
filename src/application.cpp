@@ -106,7 +106,7 @@ void Application::render(void)
 
 	//Draw the floor grid, helpful to have a reference point
 	if(render_debug)
-		drawGrid();
+		// drawGrid();
 
     glDisable(GL_DEPTH_TEST);
     //render anything in the gui after this
@@ -247,6 +247,7 @@ void Application::renderDebugGUI(void)
 	ImGui::Checkbox("Use single pass", &GTR::Renderer::use_single_pass);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
+	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);
 
 	//add info to the debug panel about the camera
 	if (ImGui::TreeNode(camera, "Camera")) {

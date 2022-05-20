@@ -238,7 +238,7 @@ GLenum one_buffer = GL_BACK;
 
 void FBO::unbind()
 {
-	// output goes to the FBO and it’s attached buffers
+	// output goes to the FBO and itâ€™s attached buffers
 	glPopAttrib();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	//glDrawBuffers(1, &one_buffer);
