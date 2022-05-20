@@ -22,6 +22,7 @@ Renderer::Renderer()
 {
 	render_pipeline = FORWARD;
 	gbuffers_fbo = nullptr;
+	illumination_fbo = nullptr;
 }
 
 
@@ -141,6 +142,31 @@ void Renderer::createRenderCall(const Matrix44 model, Mesh* mesh, GTR::Material*
 	render_calls.emplace_back(mesh, material, model, distance, world_bounding);
 }
 
+void Renderer::upload_light_to_shader(Shader* shader, const LightEntity*  light)
+{
+	shader->setUniform("u_light_type", light->light_type);
+
+	shader->setUniform("u_light_color", light->color * light->intensity);
+	shader->setUniform("u_light_position", light->model * Vector3());
+	shader->setUniform("u_light_max_distance", light->max_distance);
+
+	shader->setUniform("u_light_cone_angle", static_cast<float>(cos(light->cone_angle * DEG2RAD)));
+	shader->setUniform("u_light_exp", light->cone_exp);
+	shader->setUniform("u_light_direction", light->model.rotateVector(Vector3(0, 0, 1)));
+
+
+	if (light->shadowmap)
+	{
+		shader->setUniform("u_light_casts_shadows", 1);
+		shader->setUniform("u_light_shadowmap", light->shadowmap, 8);
+		shader->setUniform("u_shadow_viewproj", light->camera->viewprojection_matrix);
+		shader->setUniform("u_shadow_bias", light->shadow_bias);
+
+	}
+	else
+		shader->setUniform("u_light_casts_shadows", 0);
+}
+
 //renders a mesh given its transform and material
 void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera)
 {
@@ -151,18 +177,20 @@ void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh
 
 	//define locals to simplify coding
 	Shader* shader = nullptr;
-	Texture* texture = nullptr;
 	const GTR::Scene* scene = GTR::Scene::instance;
 
 	const int num_lights = lights.size();
 
-	texture = material->color_texture.texture;
+	Texture* texture = material->color_texture.texture;
+	Texture* emissive_texture = material->emissive_texture.texture;
 	//texture = material->emissive_texture;
 	//texture = material->metallic_roughness_texture;
 	//texture = material->normal_texture;
 	//texture = material->occlusion_texture;
 	if (texture == nullptr)
 		texture = Texture::getWhiteTexture(); //a 1x1 white texture
+	if(!emissive_texture)
+		emissive_texture = Texture::getWhiteTexture();
 
 	if (material->alpha_mode == GTR::eAlphaMode::BLEND)
 	{
@@ -200,6 +228,10 @@ void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh
 	shader->setUniform("u_color", material->color);
 	if (texture) shader->setUniform("u_texture", texture, 0);
 
+	shader->setUniform("u_emissive", material->emissive_factor);
+	if (emissive_texture)
+		shader->setUniform("u_emissive_texture", emissive_texture, 1);
+
 	//this is used to say which is the alpha threshold to what we should not paint a pixel on the screen (to cut polygons according to texture alpha)
 	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
 
@@ -211,29 +243,7 @@ void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh
 
 	for (const auto& light : lights)
 	{
-		shader->setUniform("u_light_type", light->light_type);
-
-		shader->setUniform("u_light_color", light->color * light->intensity);
-		shader->setUniform("u_light_position", light->model * Vector3());
-		shader->setUniform("u_light_max_distance", light->max_distance);
-
-		shader->setUniform("u_light_cone_angle", static_cast<float>(cos(light->cone_angle * DEG2RAD)));
-		shader->setUniform("u_light_exp", light->cone_exp);
-		shader->setUniform("u_light_direction", light->model.rotateVector(Vector3(0, 0, 1)));
-
-
-		if (light->shadowmap)
-		{
-			shader->setUniform("u_light_casts_shadows", 1);
-			shader->setUniform("u_light_shadowmap", light->shadowmap, 8);
-			shader->setUniform("u_shadow_viewproj", light->camera->viewprojection_matrix);
-			shader->setUniform("u_shadow_bias", light->shadow_bias);
-
-		}
-		else
-			shader->setUniform("u_light_casts_shadows", 0);
-
-
+		upload_light_to_shader(shader, light);
 		//do the draw call that renders the mesh into the screen
 		mesh->render(GL_TRIANGLES);
 		glEnable(GL_BLEND);
@@ -619,6 +629,18 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		GL_UNSIGNED_BYTE, //1 byte
 		true );		//add depth_texture
 	}
+
+	if(!illumination_fbo)
+	{
+		illumination_fbo = new FBO();
+
+		//create 3 textures of 4 components
+		illumination_fbo->create( Application::instance->window_width, Application::instance->window_height, 
+		1, 			//one textures
+		GL_RGB, 		//three channels
+		GL_UNSIGNED_BYTE, //1 byte
+		true );		//add depth_texture
+	}
 	//render each object with Gbuffer
 
 	gbuffers_fbo->bind();
@@ -636,7 +658,50 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 
 	gbuffers_fbo->unbind();
-	gbuffers_fbo->color_textures[0]->toViewport();
+	// gbuffers_fbo->color_textures[1]->toViewport();
+
+	illumination_fbo->bind();
+
+	glDisable(GL_DEPTH_TEST);
+
+	Mesh* mesh = Mesh::getQuad();
+	Shader* shader  = Shader::Get("deferred");
+	shader->enable();
+
+	shader->setUniform("u_ambient_light", scene->ambient_light);
+
+	shader->setUniform("u_color_texture", gbuffers_fbo->color_textures[0], 0);
+	shader->setUniform("u_normal_texture", gbuffers_fbo->color_textures[1], 1);
+	shader->setUniform("u_extra_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+	
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+	                                     1.0 / static_cast<float>(Application::instance->window_height)));
+
+
+
+	glDepthFunc(GL_LEQUAL);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDisable(GL_BLEND);
+
+
+	for (const auto& light : lights)
+	{
+		upload_light_to_shader(shader, light);
+		//do the draw call that renders the mesh into the screen
+		mesh->render(GL_TRIANGLES);
+		glEnable(GL_BLEND);
+		shader->setUniform("u_ambient_light", Vector3());
+	}
+	
+	illumination_fbo->unbind();
+	illumination_fbo->color_textures[0]->toViewport();
+
 	//Render to screen
 	//Mulitpass
 }

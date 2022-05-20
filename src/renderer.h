@@ -24,6 +24,7 @@ namespace GTR {
 		RenderPipeline render_pipeline;
 
 		FBO* gbuffers_fbo;
+		FBO* illumination_fbo;
 
 		Renderer();
 
@@ -39,6 +40,7 @@ namespace GTR {
 		//to render one node from the prefab and its children
 		void renderNode(const Matrix44& model, GTR::Node* node, Camera* camera);
 		void createRenderCall(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera, BoundingBox world_bounding);
+		void upload_light_to_shader(Shader* shader, const LightEntity* light);
 
 		//to render one mesh given its material and transformation matrix
 		void render_mesh_with_material_and_lighting(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
