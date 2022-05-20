@@ -244,7 +244,6 @@ void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh
 	for (const auto& light : lights)
 	{
 		upload_light_to_shader(shader, light);
-		//do the draw call that renders the mesh into the screen
 		mesh->render(GL_TRIANGLES);
 		glEnable(GL_BLEND);
 		shader->setUniform("u_ambient_light", Vector3());
@@ -256,9 +255,7 @@ void Renderer::render_mesh_with_material_and_lighting(const Matrix44 model, Mesh
 
 	//disable shader
 	shader->disable();
-
-	//set the render state as it was before to avoid problems with future renders
-	glDisable(GL_BLEND);
+	
 }
 
 void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* mesh, GTR::Material* material,
@@ -658,12 +655,34 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 
 	gbuffers_fbo->unbind();
-	// gbuffers_fbo->color_textures[1]->toViewport();
+	// glDisable(GL_DEPTH_TEST);
+	// glDisable(GL_BLEND);
+	//
+	//
+	// int h = Application::instance->window_height;
+	// int w = Application::instance->window_height;
+	//
+	// //set an area of the screen and render fullscreen quad
+	// glViewport(0, h*0.5, w * 0.5, h * 0.5);
+	// gbuffers_fbo->color_textures[0]->toViewport(); //colorbuffer
+	//
+	// glViewport(w*0.5, h*0.5, w * 0.5, h * 0.5);
+	// gbuffers_fbo->color_textures[1]->toViewport(); //normalbuffer
+	//
+	// //for the depth remember to linearize when displaying it
+	// glViewport(0, 0, w * 0.5, h * 0.5);
+	// Shader* depth_shader = Shader::getDefaultShader("linear_depth");
+	// depth_shader->enable();
+	// Vector2 near_far = Vector2(camera->near_plane, camera->far_plane);
+	// depth_shader->setUniform("u_camera_nearfar", near_far);
+	// gbuffers_fbo->depth_texture->toViewport(depth_shader);
+	//
+	// //set the viewport back to full screen
+	// glViewport(0,0,w,h);
+
 
 	illumination_fbo->bind();
-
-	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	
 	glDisable(GL_DEPTH_TEST);
 
 	Mesh* mesh = Mesh::getQuad();
@@ -687,19 +706,19 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	
 	glDisable(GL_BLEND);
-
-
+	glBlendFunc(GL_ONE, GL_ONE);
+	
+	
 	for (const auto& light : lights)
 	{
 		upload_light_to_shader(shader, light);
-		//do the draw call that renders the mesh into the screen
 		mesh->render(GL_TRIANGLES);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
 		shader->setUniform("u_ambient_light", Vector3());
+		glEnable(GL_BLEND);
 	}
 	
 	illumination_fbo->unbind();
+	glDisable(GL_BLEND);
 	illumination_fbo->color_textures[0]->toViewport();
 
 	//Render to screen
