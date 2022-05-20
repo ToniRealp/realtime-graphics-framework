@@ -662,6 +662,8 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	illumination_fbo->bind();
 
+	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 
 	Mesh* mesh = Mesh::getQuad();
@@ -670,9 +672,9 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	shader->setUniform("u_ambient_light", scene->ambient_light);
 
-	shader->setUniform("u_color_texture", gbuffers_fbo->color_textures[0], 0);
-	shader->setUniform("u_normal_texture", gbuffers_fbo->color_textures[1], 1);
-	shader->setUniform("u_extra_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
+	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
+	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
 	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
 
 
@@ -683,10 +685,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
 	                                     1.0 / static_cast<float>(Application::instance->window_height)));
 
-
-
-	glDepthFunc(GL_LEQUAL);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	
 	glDisable(GL_BLEND);
 
 
@@ -696,6 +695,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		//do the draw call that renders the mesh into the screen
 		mesh->render(GL_TRIANGLES);
 		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
 		shader->setUniform("u_ambient_light", Vector3());
 	}
 	
