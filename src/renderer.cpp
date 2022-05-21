@@ -640,7 +640,7 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 
 void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 {
-
+	
 	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
 
 	// Clear the color and the depth buffer
@@ -680,13 +680,19 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	std::vector<render_call> render_call_blend_material;
 	
 	for (const auto& rc : render_calls)
 	{
-		
 		if (camera->testBoxInFrustum(rc.world_bounding.center, rc.world_bounding.halfsize))
 		{
 			render_mesh_with_material_to_gbuffer(rc.model, rc.mesh, rc.material, camera);
+			if(rc.material->alpha_mode == BLEND)
+			{
+				render_call_blend_material.push_back(rc);
+			}
 		}
 	}
 
@@ -722,8 +728,17 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 
 	illumination_fbo->bind();
+
 	
 	render_gbuffers_with_illumination(camera, scene, gbuffers_fbo);
+	
+	gbuffers_fbo->depth_texture->copyTo(NULL);
+
+	glEnable(GL_DEPTH_TEST);
+	for (const auto &rc : render_call_blend_material)
+	{
+		render_mesh_with_material_and_lighting(rc.model,rc.mesh, rc.material,camera);
+	}
 	
 	illumination_fbo->unbind();
 	glDisable(GL_BLEND);
