@@ -646,19 +646,14 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	// glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	
 	
 	for (const auto& light : lights)
 	{
 		upload_light_to_shader(shader, light);
 
-		if(light->light_type == directional )
-		{
-			quad->render(GL_TRIANGLES);
-		}
-		else
-		{
+		
 			//we must translate the model to the center of the light
 			Matrix44 m;
 			Vector3 lightpos = light->model * Vector3();
@@ -672,13 +667,14 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 			glFrontFace(GL_CW);
 		
 			sphere->render(GL_TRIANGLES);
-		}
+		
 		shader->setUniform("u_ambient_light", Vector3());
 		glEnable(GL_BLEND);
 	}
 
 	glFrontFace(GL_CCW);
-	// glDisable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
 }
 
 void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
