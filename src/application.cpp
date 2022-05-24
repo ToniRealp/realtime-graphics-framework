@@ -245,7 +245,8 @@ void Application::renderDebugGUI(void)
 
 	ImGui::Checkbox("Wireframe", &render_wireframe);
 	ImGui::Checkbox("Use single pass", &GTR::Renderer::use_single_pass);
-	ImGui::Checkbox("Render GBuffers", &GTR::Renderer::render_gbuffers);
+	ImGui::Checkbox("Render GBuffers", &GTR::Renderer::debug_gbuffers);
+	ImGui::Checkbox("Render to full screen quad", &GTR::Renderer::render_to_full_screen_quad);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
 	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);
@@ -291,6 +292,7 @@ void Application::onKeyDown( SDL_KeyboardEvent event )
 		case SDLK_ESCAPE: must_exit = true; break; //ESC key, kill the app
 		case SDLK_F1: render_debug = !render_debug; break;
 		case SDLK_f: camera->center.set(0, 0, 0); camera->updateViewMatrix(); break;
+		case SDLK_p: GTR::Renderer::render_pipeline = GTR::Renderer::render_pipeline == GTR::Renderer::FORWARD ? GTR::Renderer::DEFERRED : GTR::Renderer::FORWARD; break;
 		case SDLK_F5: Shader::ReloadAll(); break;
 		case SDLK_F6:
 			scene->clear();

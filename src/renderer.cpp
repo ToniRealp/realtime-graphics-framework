@@ -17,11 +17,12 @@
 
 using namespace GTR;
 bool Renderer::use_single_pass = false;
-bool Renderer::render_gbuffers = false;
+bool Renderer::debug_gbuffers = false;
+bool Renderer::render_to_full_screen_quad = false;
+Renderer::RenderPipeline Renderer::render_pipeline = DEFERRED;
 
 Renderer::Renderer()
 {
-	render_pipeline = DEFERRED;
 	gbuffers_fbo = nullptr;
 	illumination_fbo = nullptr;
 }
@@ -578,7 +579,7 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 	shader->disable();
 }
 
-void Renderer::render_gbuffers_with_illumination(Camera* camera, Scene* scene, FBO* gbuffers)
+void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene, FBO* gbuffers)
 {
 	glDisable(GL_DEPTH_TEST);
 
@@ -613,6 +614,71 @@ void Renderer::render_gbuffers_with_illumination(Camera* camera, Scene* scene, F
 		shader->setUniform("u_ambient_light", Vector3());
 		glEnable(GL_BLEND);
 	}
+}
+
+void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene, FBO* gbuffers)
+{
+	glDisable(GL_DEPTH_TEST);
+
+	
+	Mesh* quad = Mesh::getQuad();
+	Mesh* sphere = Mesh::Get("data/meshes/sphere.obj");
+	Shader* shader  = Shader::Get("deferred_ws");
+	shader->enable();
+
+	shader->setUniform("u_ambient_light", scene->ambient_light);
+
+	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
+	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
+	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+	
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+										 1.0 / static_cast<float>(Application::instance->window_height)));
+
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	
+	
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	// glEnable(GL_CULL_FACE);
+	
+	
+	for (const auto& light : lights)
+	{
+		upload_light_to_shader(shader, light);
+
+		if(light->light_type == directional )
+		{
+			quad->render(GL_TRIANGLES);
+		}
+		else
+		{
+			//we must translate the model to the center of the light
+			Matrix44 m;
+			Vector3 lightpos = light->model * Vector3();
+			m.setTranslation(lightpos.x, lightpos.y, lightpos.z);
+			//and scale it according to the max_distance of the light
+			m.scale(light->max_distance, light->max_distance, light->max_distance);
+
+			//pass the model to the shader to render the sphere
+			shader->setUniform("u_model", m);
+
+			glFrontFace(GL_CW);
+		
+			sphere->render(GL_TRIANGLES);
+		}
+		shader->setUniform("u_ambient_light", Vector3());
+		glEnable(GL_BLEND);
+	}
+
+	glFrontFace(GL_CCW);
+	// glDisable(GL_CULL_FACE);
 }
 
 void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
@@ -698,7 +764,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	gbuffers_fbo->unbind();
 
-	if(render_gbuffers)
+	if(debug_gbuffers)
 	{
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
@@ -729,11 +795,20 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	illumination_fbo->bind();
 
-	
-	render_gbuffers_with_illumination(camera, scene, gbuffers_fbo);
+	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	if(render_to_full_screen_quad){
+		render_gbuffers_with_illumination_quad(camera, scene, gbuffers_fbo);
+	}
+	else
+	{
+		render_gbuffers_with_illumination_geometry(camera, scene, gbuffers_fbo);
+	}
 	
 	gbuffers_fbo->depth_texture->copyTo(NULL);
 
+	//Render transparent objects with forward pipeline
 	glEnable(GL_DEPTH_TEST);
 	for (const auto &rc : render_call_blend_material)
 	{
@@ -743,7 +818,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	illumination_fbo->unbind();
 	glDisable(GL_BLEND);
 
-	if(!render_gbuffers)
+	if(!debug_gbuffers)
 		illumination_fbo->color_textures[0]->toViewport();
 	
 }

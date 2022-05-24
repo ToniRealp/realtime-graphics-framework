@@ -14,15 +14,17 @@ namespace GTR {
 	// Separating the render from anything else makes the code cleaner
 	class Renderer
 	{
-		enum RenderPipeline { FORWARD, DEFERRED };
 
 	public:
+		enum RenderPipeline { FORWARD, DEFERRED };
+		
 		static bool use_single_pass;
-		static bool render_gbuffers;
+		static bool debug_gbuffers;
+		static bool render_to_full_screen_quad;
+		static RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
 		std::vector<render_call> render_calls;
-		RenderPipeline render_pipeline;
 
 		FBO* gbuffers_fbo;
 		FBO* illumination_fbo;
@@ -46,7 +48,8 @@ namespace GTR {
 		//to render one mesh given its material and transformation matrix
 		void render_mesh_with_material_and_lighting(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 		void render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
-		void render_gbuffers_with_illumination(Camera* camera, Scene* scene, FBO* gbuffers);
+		void render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene, FBO* gbuffers);
+		void render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene, FBO* gbuffers);
 		void render_mesh_with_material_single_pass(const Matrix44& model, Mesh* mesh, Material* material, Camera* camera);
 		void render_flat_mesh(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 		void generate_shadow_map(LightEntity* light);
