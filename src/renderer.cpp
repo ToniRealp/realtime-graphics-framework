@@ -526,13 +526,15 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 
 	Texture* texture = material->color_texture.texture;
 	Texture* emissive_texture = material->emissive_texture.texture;
-	//texture = material->metallic_roughness_texture;
+	Texture* metallic_roughness_texture = material->metallic_roughness_texture.texture;
 	//texture = material->normal_texture;
 	//texture = material->occlusion_texture;
 	if (texture == nullptr)
 		texture = Texture::getWhiteTexture(); //a 1x1 white texture
 	if(!emissive_texture)
 		emissive_texture = Texture::getWhiteTexture();
+	if(!metallic_roughness_texture)
+		metallic_roughness_texture = Texture::getWhiteTexture();
 	//select if render both sides of the triangles
 	
 	if (material->two_sided)
@@ -566,6 +568,10 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 	shader->setUniform("u_emissive", material->emissive_factor);
 	if (emissive_texture)
 		shader->setUniform("u_emissive_texture", emissive_texture, 1);
+	
+	if (metallic_roughness_texture)
+		shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 2);
+	
 
 	//this is used to say which is the alpha threshold to what we should not paint a pixel on the screen (to cut polygons according to texture alpha)
 	shader->setUniform("u_alpha_cutoff", material->alpha_mode == GTR::eAlphaMode::MASK ? material->alpha_cutoff : 0);
@@ -584,10 +590,11 @@ void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* sce
 	glDisable(GL_DEPTH_TEST);
 
 	Mesh* mesh = Mesh::getQuad();
-	Shader* shader  = Shader::Get("deferred");
+	Shader* shader  = Shader::Get("deferred_PBR");
 	shader->enable();
 
 	shader->setUniform("u_ambient_light", scene->ambient_light);
+	shader->setUniform("u_camera_position", camera->eye);
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
 	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
@@ -652,8 +659,6 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	for (const auto& light : lights)
 	{
 		upload_light_to_shader(shader, light);
-
-		
 			//we must translate the model to the center of the light
 			Matrix44 m;
 			Vector3 lightpos = light->model * Vector3();
@@ -775,6 +780,9 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		
 		glViewport(width*0.5, height*0.5, width * 0.5, height * 0.5);
 		gbuffers_fbo->color_textures[1]->toViewport(); //normalbuffer
+
+		glViewport(width*0.5, height*0, width * 0.5, height * 0.5);
+		gbuffers_fbo->color_textures[2]->toViewport(); //metallic and roughness
 		
 		//for the depth remember to linearize when displaying it
 		glViewport(0, 0, width * 0.5, height * 0.5);
