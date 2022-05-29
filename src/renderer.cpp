@@ -589,7 +589,7 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 	shader->disable();
 }
 
-void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene, FBO* gbuffers)
+void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene)
 {
 	glDisable(GL_DEPTH_TEST);
 
@@ -627,17 +627,16 @@ void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* sce
 	}
 }
 
-void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene, FBO* gbuffers)
+void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene)
 {
 	glDisable(GL_DEPTH_TEST);
 
-	
-	Mesh* quad = Mesh::getQuad();
-	Mesh* sphere = Mesh::Get("data/meshes/sphere.obj");
+	Mesh* mesh = Mesh::Get("data/meshes/sphere.obj");
 	Shader* shader  = Shader::Get("deferred_ws");
 	shader->enable();
 
 	shader->setUniform("u_ambient_light", scene->ambient_light);
+	shader->setUniform("u_camera_position", camera->eye);
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
 	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
@@ -653,37 +652,33 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 										 1.0 / static_cast<float>(Application::instance->window_height)));
 
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
-	
+
 	
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_CULL_FACE);
 	
-	
-	for (const auto& light : lights)
+
+	for (auto light: lights)
 	{
+		Matrix44 m;
+		m.setTranslation(light->model.getTranslation().x, light->model.getTranslation().y, light->model.getTranslation().z);
+		m.scale(light->max_distance, light->max_distance, light->max_distance);
+		
+		shader->setUniform("u_model", m);
+		
 		upload_light_to_shader(shader, light);
-			//we must translate the model to the center of the light
-			Matrix44 m;
-			Vector3 lightpos = light->model * Vector3();
-			m.setTranslation(lightpos.x, lightpos.y, lightpos.z);
-			//and scale it according to the max_distance of the light
-			m.scale(light->max_distance, light->max_distance, light->max_distance);
-
-			//pass the model to the shader to render the sphere
-			shader->setUniform("u_model", m);
-
-			glFrontFace(GL_CW);
 		
-			sphere->render(GL_TRIANGLES);
+		glFrontFace(GL_CW);
 		
+		mesh->render(GL_TRIANGLES);
 		shader->setUniform("u_ambient_light", Vector3());
 		glEnable(GL_BLEND);
 	}
-
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
+		
 }
 
 void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* gbuffers_fbo)
@@ -823,14 +818,14 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	illumination_fbo->bind();
 
 	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if(render_to_full_screen_quad){
-		render_gbuffers_with_illumination_quad(camera, scene, gbuffers_fbo);
+		render_gbuffers_with_illumination_quad(camera, scene);
 	}
 	else
 	{
-		render_gbuffers_with_illumination_geometry(camera, scene, gbuffers_fbo);
+		render_gbuffers_with_illumination_geometry(camera, scene);
 	}
 	
 	gbuffers_fbo->depth_texture->copyTo(NULL);

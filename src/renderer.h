@@ -54,8 +54,8 @@ namespace GTR {
 		//to render one mesh given its material and transformation matrix
 		void render_mesh_with_material_and_lighting(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 		void render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
-		void render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene, FBO* gbuffers);
-		void render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene, FBO* gbuffers);
+		void render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene);
+		void render_gbuffers_with_illumination_geometry(Camera* camera, Scene* scene);
 		void render_mesh_with_material_single_pass(const Matrix44& model, Mesh* mesh, Material* material, Camera* camera);
 		void render_flat_mesh(Matrix44 model, Mesh* mesh, GTR::Material* material, Camera* camera);
 		void generate_shadow_map(LightEntity* light);
