@@ -617,17 +617,8 @@ void Renderer::render_gbuffers_with_ambient(Camera* camera, Scene* scene)
 
 	
 	glDisable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
 
 	mesh->render(GL_TRIANGLES);
-	
-	// for (const auto& light : lights)
-	// {
-	// 	upload_light_to_shader(shader, light);
-	// 	
-	// 	shader->setUniform("u_ambient_light", Vector3());
-	// 	glEnable(GL_BLEND);
-	// }
 	
 }
 
@@ -858,7 +849,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	illumination_fbo->bind();
 
 	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if(render_to_full_screen_quad){
 		render_gbuffers_with_illumination_quad(camera, scene);
