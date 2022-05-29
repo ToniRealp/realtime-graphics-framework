@@ -605,6 +605,7 @@ void Renderer::render_gbuffers_with_ambient(Camera* camera, Scene* scene)
 	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
 	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
 	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+	shader->setUniform("u_ssao_texture", ambient_occlusion_fbo->color_textures[0], 4);
 
 
 	Matrix44 inverse_view_projection = camera->viewprojection_matrix;

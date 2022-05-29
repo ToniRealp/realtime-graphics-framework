@@ -642,6 +642,7 @@ uniform sampler2D u_gb0_texture;
 uniform sampler2D u_gb1_texture;
 uniform sampler2D u_gb2_texture;
 uniform sampler2D u_depth_texture;
+uniform sampler2D u_ssao_texture;
 
 uniform mat4 u_inverse_viewprojection;
 uniform vec2 u_iRes;
@@ -871,7 +872,9 @@ void main()
    vec3 lightParams = u_light_color * attenuation_factor * spot_factor * shadow_factor; 
    
    //modulate direct light by light received
-    vec3 total_light = vec3(u_ambient_light);
+   
+   float ambient_occlusion_factor = texture(u_ssao_texture, uv).x;
+   vec3 total_light = vec3(u_ambient_light) * ambient_occlusion_factor;
    total_light += direct * lightParams;
 
     
