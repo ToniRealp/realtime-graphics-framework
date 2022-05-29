@@ -21,6 +21,7 @@ namespace GTR {
 		static bool use_single_pass;
 		static bool debug_gbuffers;
 		static bool render_to_full_screen_quad;
+		static bool debug_ssao;
 		static RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
@@ -28,10 +29,15 @@ namespace GTR {
 
 		FBO* gbuffers_fbo;
 		FBO* illumination_fbo;
+		FBO* ambient_occlusion_fbo;
+
+		const int num_points = 64;
+		std::vector<Vector3> random_points;
 
 		Renderer();
 
 		void render_forward(Camera* camera, GTR::Scene* scene);
+		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* gbuffers_fbo);
 		void render_deferred(Camera* camera, GTR::Scene* scene);
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);

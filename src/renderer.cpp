@@ -19,12 +19,16 @@ using namespace GTR;
 bool Renderer::use_single_pass = false;
 bool Renderer::debug_gbuffers = false;
 bool Renderer::render_to_full_screen_quad = false;
+bool Renderer::debug_ssao = false;
 Renderer::RenderPipeline Renderer::render_pipeline = DEFERRED;
 
 Renderer::Renderer()
 {
 	gbuffers_fbo = nullptr;
 	illumination_fbo = nullptr;
+	ambient_occlusion_fbo = nullptr;
+
+	random_points = generateSpherePoints(num_points, 1, false);
 }
 
 
@@ -682,6 +686,35 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	glDisable(GL_CULL_FACE);
 }
 
+void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* gbuffers_fbo)
+{
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	
+	Mesh* quad = Mesh::getQuad();
+	Shader* shader  = Shader::Get("ssao");
+	shader->enable();
+
+	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+
+	
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+										 1.0 / static_cast<float>(Application::instance->window_height)));
+
+	shader->setUniform3Array("u_points", reinterpret_cast<float*>(&random_points[0]), num_points);
+
+	
+	quad->render(GL_TRIANGLES);
+
+	
+}
+
 void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 {
 
@@ -704,6 +737,7 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 			}
 	}
 }
+
 
 void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 {
@@ -741,6 +775,18 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		GL_UNSIGNED_BYTE, //1 byte
 		true );		//add depth_texture
 	}
+
+	if(!ambient_occlusion_fbo)
+	{
+		ambient_occlusion_fbo = new FBO();
+
+		//create 3 textures of 4 components
+		ambient_occlusion_fbo->create( Application::instance->window_width, Application::instance->window_height, 
+		1, 			//one textures
+		GL_LUMINANCE, 		//three channels
+		GL_UNSIGNED_BYTE, //1 byte
+		false );		//add depth_texture
+	}
 	//render each object with Gbuffer
 
 	gbuffers_fbo->bind();
@@ -764,6 +810,40 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 
 	gbuffers_fbo->unbind();
+	
+
+	ambient_occlusion_fbo->bind();
+
+	render_ambient_occlusion(camera, scene, gbuffers_fbo);
+	
+	ambient_occlusion_fbo->unbind();
+	
+
+	
+	illumination_fbo->bind();
+
+	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	if(render_to_full_screen_quad){
+		render_gbuffers_with_illumination_quad(camera, scene, gbuffers_fbo);
+	}
+	else
+	{
+		render_gbuffers_with_illumination_geometry(camera, scene, gbuffers_fbo);
+	}
+	
+	gbuffers_fbo->depth_texture->copyTo(NULL);
+
+	//Render transparent objects with forward pipeline
+	glEnable(GL_DEPTH_TEST);
+	for (const auto &rc : render_call_blend_material)
+	{
+		render_mesh_with_material_and_lighting(rc.model,rc.mesh, rc.material,camera);
+	}
+	
+	illumination_fbo->unbind();
+	glDisable(GL_BLEND);
 
 	if(debug_gbuffers)
 	{
@@ -794,35 +874,13 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		
 		//set the viewport back to full screen
 		glViewport(0,0,width,height);
-	}
-
-
-	illumination_fbo->bind();
-
-	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	if(render_to_full_screen_quad){
-		render_gbuffers_with_illumination_quad(camera, scene, gbuffers_fbo);
+	}else if(debug_ssao)
+	{
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
+		ambient_occlusion_fbo->color_textures[0]->toViewport();
 	}
 	else
-	{
-		render_gbuffers_with_illumination_geometry(camera, scene, gbuffers_fbo);
-	}
-	
-	gbuffers_fbo->depth_texture->copyTo(NULL);
-
-	//Render transparent objects with forward pipeline
-	glEnable(GL_DEPTH_TEST);
-	for (const auto &rc : render_call_blend_material)
-	{
-		render_mesh_with_material_and_lighting(rc.model,rc.mesh, rc.material,camera);
-	}
-	
-	illumination_fbo->unbind();
-	glDisable(GL_BLEND);
-
-	if(!debug_gbuffers)
 		illumination_fbo->color_textures[0]->toViewport();
 	
 }

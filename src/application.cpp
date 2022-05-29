@@ -246,6 +246,7 @@ void Application::renderDebugGUI(void)
 	ImGui::Checkbox("Wireframe", &render_wireframe);
 	ImGui::Checkbox("Use single pass", &GTR::Renderer::use_single_pass);
 	ImGui::Checkbox("Render GBuffers", &GTR::Renderer::debug_gbuffers);
+	ImGui::Checkbox("Render SSAO", &GTR::Renderer::debug_ssao);
 	ImGui::Checkbox("Render to full screen quad", &GTR::Renderer::render_to_full_screen_quad);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
