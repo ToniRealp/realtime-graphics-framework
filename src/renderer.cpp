@@ -589,6 +589,47 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 	shader->disable();
 }
 
+void Renderer::render_gbuffers_with_ambient(Camera* camera, Scene* scene)
+{
+
+	glDisable(GL_DEPTH_TEST);
+
+	Mesh* mesh = Mesh::getQuad();
+	Shader* shader  = Shader::Get("deferred_PBR");
+	shader->enable();
+
+	shader->setUniform("u_ambient_light", scene->ambient_light);
+	shader->setUniform("u_camera_position", camera->eye);
+
+	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
+	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
+	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+	
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+										 1.0 / static_cast<float>(Application::instance->window_height)));
+
+	
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	mesh->render(GL_TRIANGLES);
+	
+	// for (const auto& light : lights)
+	// {
+	// 	upload_light_to_shader(shader, light);
+	// 	
+	// 	shader->setUniform("u_ambient_light", Vector3());
+	// 	glEnable(GL_BLEND);
+	// }
+	
+}
+
 void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* scene)
 {
 	glDisable(GL_DEPTH_TEST);
@@ -635,7 +676,7 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	Shader* shader  = Shader::Get("deferred_ws");
 	shader->enable();
 
-	shader->setUniform("u_ambient_light", scene->ambient_light);
+	shader->setUniform("u_ambient_light", Vector3());
 	shader->setUniform("u_camera_position", camera->eye);
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
@@ -654,12 +695,12 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
 
 	
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_CULL_FACE);
 	
 
-	for (auto light: lights)
+	for (const auto light: lights)
 	{
 		Matrix44 m;
 		m.setTranslation(light->model.getTranslation().x, light->model.getTranslation().y, light->model.getTranslation().z);
@@ -672,8 +713,6 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 		glFrontFace(GL_CW);
 		
 		mesh->render(GL_TRIANGLES);
-		shader->setUniform("u_ambient_light", Vector3());
-		glEnable(GL_BLEND);
 	}
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
@@ -825,6 +864,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 	else
 	{
+		render_gbuffers_with_ambient(camera, scene);
 		render_gbuffers_with_illumination_geometry(camera, scene);
 	}
 	
