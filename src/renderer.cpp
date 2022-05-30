@@ -622,8 +622,7 @@ void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* sce
 	Mesh* mesh = Mesh::getQuad();
 	Shader* shader  = Shader::Get("deferred_PBR");
 	shader->enable();
-
-	shader->setUniform("u_ambient_light", scene->ambient_light);
+	
 	shader->setUniform("u_camera_position", camera->eye);
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
@@ -640,7 +639,7 @@ void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* sce
 										 1.0 / static_cast<float>(Application::instance->window_height)));
 
 	
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	
 	
@@ -648,8 +647,7 @@ void Renderer::render_gbuffers_with_illumination_quad(Camera* camera, Scene* sce
 	{
 		upload_light_to_shader(shader, light);
 		mesh->render(GL_TRIANGLES);
-		shader->setUniform("u_ambient_light", Vector3());
-		glEnable(GL_BLEND);
+		
 	}
 }
 
@@ -789,22 +787,21 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 		//create 3 textures of 4 components
 		illumination_fbo->create( Application::instance->window_width, Application::instance->window_height, 
-		1, 			//one textures
-		GL_RGB, 		//three channels
-		GL_UNSIGNED_BYTE, //1 byte
-		true );		//add depth_texture
+		1,
+		GL_RGB, 		
+		GL_FLOAT, 
+		true );
 	}
 
 	if(!ambient_occlusion_fbo)
 	{
 		ambient_occlusion_fbo = new FBO();
-
-		//create 3 textures of 4 components
+		
 		ambient_occlusion_fbo->create( Application::instance->window_width, Application::instance->window_height, 
-		1, 			//one textures
-		GL_LUMINANCE, 		//three channels
-		GL_UNSIGNED_BYTE, //1 byte
-		false );		//add depth_texture
+		1, 			
+		GL_LUMINANCE, 		
+		GL_UNSIGNED_BYTE, 
+		false );
 	}
 	//render each object with Gbuffer
 
@@ -847,6 +844,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if(render_to_full_screen_quad){
+		render_gbuffers_with_ambient(camera, scene);
 		render_gbuffers_with_illumination_quad(camera, scene);
 	}
 	else
@@ -903,6 +901,10 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		ambient_occlusion_fbo->color_textures[0]->toViewport();
 	}
 	else
-		illumination_fbo->color_textures[0]->toViewport();
+	{
+		Shader* shader = Shader::Get("gamma");
+		shader->setUniform("u_final_ilumination", illumination_fbo->color_textures[0],0);
+		illumination_fbo->color_textures[0]->toViewport(shader);
+	}
 	
 }
