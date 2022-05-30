@@ -593,31 +593,24 @@ void Renderer::render_gbuffers_with_ambient(Camera* camera, Scene* scene)
 {
 
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
 
 	Mesh* mesh = Mesh::getQuad();
-	Shader* shader  = Shader::Get("deferred_PBR");
+	Shader* shader  = Shader::Get("ambient");
 	shader->enable();
 
 	shader->setUniform("u_ambient_light", scene->ambient_light);
-	shader->setUniform("u_camera_position", camera->eye);
+
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
-	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
-	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
-	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
 	shader->setUniform("u_ssao_texture", ambient_occlusion_fbo->color_textures[0], 4);
-
-
-	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
-	inverse_view_projection.inverse();
 	
-	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	
 	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
 										 1.0 / static_cast<float>(Application::instance->window_height)));
 
 	
-	glDisable(GL_BLEND);
-
 	mesh->render(GL_TRIANGLES);
 	
 }
@@ -667,8 +660,7 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	Mesh* mesh = Mesh::Get("data/meshes/sphere.obj");
 	Shader* shader  = Shader::Get("deferred_ws");
 	shader->enable();
-
-	shader->setUniform("u_ambient_light", Vector3());
+	
 	shader->setUniform("u_camera_position", camera->eye);
 
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
@@ -712,7 +704,7 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 		
 }
 
-void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* gbuffers_fbo)
+void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene)
 {
 
 	glDisable(GL_DEPTH_TEST);
@@ -722,6 +714,7 @@ void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* 
 	Shader* shader  = Shader::Get("ssao");
 	shader->enable();
 
+	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
 	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
 
 	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
@@ -839,8 +832,10 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	
 
 	ambient_occlusion_fbo->bind();
+	// glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	render_ambient_occlusion(camera, scene, gbuffers_fbo);
+	render_ambient_occlusion(camera, scene);
 	
 	ambient_occlusion_fbo->unbind();
 	

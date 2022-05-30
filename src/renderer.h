@@ -37,7 +37,7 @@ namespace GTR {
 		Renderer();
 
 		void render_forward(Camera* camera, GTR::Scene* scene);
-		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene, FBO* gbuffers_fbo);
+		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene);
 		void render_deferred(Camera* camera, GTR::Scene* scene);
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
