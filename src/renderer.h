@@ -18,11 +18,11 @@ namespace GTR {
 	public:
 		enum RenderPipeline { FORWARD, DEFERRED };
 		
-		static bool use_single_pass;
-		static bool debug_gbuffers;
-		static bool render_to_full_screen_quad;
-		static bool debug_ssao;
-		static RenderPipeline render_pipeline;
+		bool use_single_pass;
+		bool debug_gbuffers;
+		bool render_to_full_screen_quad;
+		bool debug_ssao;
+		RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
 		std::vector<render_call> render_calls;
@@ -33,6 +33,10 @@ namespace GTR {
 
 		const int num_points = 64;
 		std::vector<Vector3> random_points;
+
+		float scale = 1.0f;
+		float average_lum = 1.0f;
+		float lum_white = 1.0f;
 
 		Renderer();
 

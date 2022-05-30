@@ -16,17 +16,18 @@
 
 
 using namespace GTR;
-bool Renderer::use_single_pass = false;
-bool Renderer::debug_gbuffers = false;
-bool Renderer::render_to_full_screen_quad = false;
-bool Renderer::debug_ssao = false;
-Renderer::RenderPipeline Renderer::render_pipeline = DEFERRED;
 
 Renderer::Renderer()
 {
 	gbuffers_fbo = nullptr;
 	illumination_fbo = nullptr;
 	ambient_occlusion_fbo = nullptr;
+
+	use_single_pass = false;
+	debug_gbuffers = false;
+	render_to_full_screen_quad = false;
+	debug_ssao = false;
+	render_pipeline = DEFERRED;
 
 	random_points = generateSpherePoints(num_points, 1, false);
 }
@@ -903,7 +904,10 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	else
 	{
 		Shader* shader = Shader::Get("gamma");
-		shader->setUniform("u_final_ilumination", illumination_fbo->color_textures[0],0);
+		shader->enable();
+		shader->setUniform("u_scale", scale);
+		shader->setUniform("u_average_lum", average_lum);
+		shader->setUniform("u_lumwhite2", lum_white);
 		illumination_fbo->color_textures[0]->toViewport(shader);
 	}
 	

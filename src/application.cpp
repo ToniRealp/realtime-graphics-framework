@@ -244,13 +244,16 @@ void Application::renderDebugGUI(void)
 	ImGui::Text(getGPUStats().c_str());					   // Display some text (you can use a format strings too)
 
 	ImGui::Checkbox("Wireframe", &render_wireframe);
-	ImGui::Checkbox("Use single pass", &GTR::Renderer::use_single_pass);
-	ImGui::Checkbox("Render GBuffers", &GTR::Renderer::debug_gbuffers);
-	ImGui::Checkbox("Render SSAO", &GTR::Renderer::debug_ssao);
-	ImGui::Checkbox("Render to full screen quad", &GTR::Renderer::render_to_full_screen_quad);
+	ImGui::Checkbox("Use single pass", &renderer->use_single_pass);
+	ImGui::Checkbox("Render GBuffers", &renderer->debug_gbuffers);
+	ImGui::Checkbox("Render SSAO", &renderer->debug_ssao);
+	ImGui::Checkbox("Render to full screen quad", &renderer->render_to_full_screen_quad);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
 	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);
+	ImGui::DragFloat("scale", &renderer->scale);
+	ImGui::DragFloat("average luminance", &renderer->average_lum);
+	ImGui::DragFloat("lum white", &renderer->lum_white);
 
 	//add info to the debug panel about the camera
 	if (ImGui::TreeNode(camera, "Camera")) {
@@ -293,7 +296,7 @@ void Application::onKeyDown( SDL_KeyboardEvent event )
 		case SDLK_ESCAPE: must_exit = true; break; //ESC key, kill the app
 		case SDLK_F1: render_debug = !render_debug; break;
 		case SDLK_f: camera->center.set(0, 0, 0); camera->updateViewMatrix(); break;
-		case SDLK_p: GTR::Renderer::render_pipeline = GTR::Renderer::render_pipeline == GTR::Renderer::FORWARD ? GTR::Renderer::DEFERRED : GTR::Renderer::FORWARD; break;
+		case SDLK_p: renderer->render_pipeline = renderer->render_pipeline == GTR::Renderer::FORWARD ? GTR::Renderer::DEFERRED : GTR::Renderer::FORWARD; break;
 		case SDLK_F5: Shader::ReloadAll(); break;
 		case SDLK_F6:
 			scene->clear();
