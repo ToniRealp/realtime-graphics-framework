@@ -251,9 +251,9 @@ void Application::renderDebugGUI(void)
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
 	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);
-	ImGui::DragFloat("scale", &renderer->scale);
-	ImGui::DragFloat("average luminance", &renderer->average_lum);
-	ImGui::DragFloat("lum white", &renderer->lum_white);
+	ImGui::DragFloat("scale", &renderer->scale, 0.01);
+	ImGui::DragFloat("average luminance", &renderer->average_lum, 0.01);
+	ImGui::DragFloat("lum white", &renderer->lum_white, 0.01);
 
 	//add info to the debug panel about the camera
 	if (ImGui::TreeNode(camera, "Camera")) {
