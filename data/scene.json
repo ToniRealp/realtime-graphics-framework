@@ -1,6 +1,6 @@
 {
 	"background_color":[0.01,0.01,0.1],
-	"ambient_light":[0.1,0.1,0.2],
+	"ambient_light":[0.03,0.03,0.1],
 	"environment":"night.hdre",
 	"camera_position":[-300,90,-150],
 	"camera_target":[0,40,0],
@@ -48,6 +48,41 @@
 			"angle":-150
 		},
 		{
+			"name":"car6",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-158,0,512],
+			"angle":-150
+		},
+		{
+			"name":"car7",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[18,0,-368],
+			"angle":-45
+		},
+		{
+			"name":"car8",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-357,0,-238],
+			"angle":-50
+		},
+		{
+			"name":"car9",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-223,0,-419],
+			"angle":-45
+		},
+		{
+			"name":"car10",
+			"type":"PREFAB",
+			"filename":"prefabs/gmc/scene.gltf",
+			"position":[-605,0,51],
+			"angle":-90
+		},
+		{
 			"name":"house",
 			"type":"PREFAB",
 			"filename":"prefabs/house_test/scene.gltf",
@@ -82,13 +117,13 @@
 			"position":[0,36,-16],
 			"angle": 135,
 			"color":[1,0.9,0.8],
-			"intensity":10,
+			"intensity":6,
 			"max_dist":1000,
 			"cone_angle":45,
 			"cone_exp":25,
 			"light_type":"SPOT",
 			"cast_shadows": true,
-			"shadow_bias": 0.001
+			"shadow_bias": 0.015
 		},
 		{
 			"name":"spot2",
@@ -96,13 +131,13 @@
 			"position":[-315,36,371],
 			"angle": 35,
 			"color":[1,0.9,0.8],
-			"intensity":10,
+			"intensity":6,
 			"max_dist":1000,
 			"cone_angle":45,
 			"cone_exp":25,
 			"light_type":"SPOT",
 			"cast_shadows": true,
-			"shadow_bias": 0.001
+			"shadow_bias": 0.015
 		},
 		{
 			"name":"pointlight",
@@ -110,7 +145,7 @@
 			"position":[-187,38,-156],
 			"angle": 0,
 			"color":[1,0.2,0.1],
-			"intensity":2.5,
+			"intensity":4.5,
 			"max_dist":70,
 			"light_type":"POINT"
 		},
@@ -120,7 +155,7 @@
 			"position":[-131,38,-205],
 			"angle": 0,
 			"color":[1,0.2,0.1],
-			"intensity":2.5,
+			"intensity":4.5,
 			"max_dist":70,
 			"light_type":"POINT"
 		},
@@ -130,7 +165,7 @@
 			"position":[-460,46,556],
 			"angle": 0,
 			"color":[1,0.2,0.1],
-			"intensity":2.5,
+			"intensity":4.5,
 			"max_dist":70,
 			"light_type":"POINT"
 		},
@@ -140,7 +175,167 @@
 			"position":[-400,46,588],
 			"angle": 0,
 			"color":[1,0.2,0.1],
-			"intensity":2.5,
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight5",
+			"type":"LIGHT",
+			"position":[-442,46,189],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight6",
+			"type":"LIGHT",
+			"position":[-444,46,114],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight7",
+			"type":"LIGHT",
+			"position":[-442,46,-1],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight8",
+			"type":"LIGHT",
+			"position":[-442,46,-60],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight9",
+			"type":"LIGHT",
+			"position":[-727,46,78],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight10",
+			"type":"LIGHT",
+			"position":[-727,46,20],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight11",
+			"type":"LIGHT",
+			"position":[-209,46,644],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight12",
+			"type":"LIGHT",
+			"position":[-255,46,611],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight13",
+			"type":"LIGHT",
+			"position":[-69,46,364],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight14",
+			"type":"LIGHT",
+			"position":[-126,46,341],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight15",
+			"type":"LIGHT",
+			"position":[-483,46,-229],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight16",
+			"type":"LIGHT",
+			"position":[-435,46,-355],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight17",
+			"type":"LIGHT",
+			"position":[-341,46,-490],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight18",
+			"type":"LIGHT",
+			"position":[-294,46,-533],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight19",
+			"type":"LIGHT",
+			"position":[-98,46,-444],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
+			"max_dist":70,
+			"light_type":"POINT"
+		},
+		{
+			"name":"pointlight20",
+			"type":"LIGHT",
+			"position":[-50,46,-478],
+			"angle": 0,
+			"color":[1,0.2,0.1],
+			"intensity":4.5,
 			"max_dist":70,
 			"light_type":"POINT"
 		},
@@ -150,7 +345,7 @@
 			"position":[150,300,50],
 			"target":[-80,0,-50],
 			"color":[0.1,0.2,0.4],
-			"intensity":1.5,
+			"intensity":4.5,
 			"area_size":1500,
 			"max_dist":1000,
 			"cast_shadows": true,
