@@ -1,5 +1,6 @@
 #pragma once
 #include "prefab.h"
+#include "sphericalharmonics.h"
 
 //forward declarations
 class Camera;
@@ -9,6 +10,14 @@ namespace GTR {
 
 	class Prefab;
 	class Material;
+
+	struct sProbe {
+		Vector3 pos; //where is located
+		Vector3 local; //its ijk pos in the matrix
+		int index; //its index in the linear array
+		SphericalHarmonics sh; //coeffs
+	};
+	
 	
 	// This class is in charge of rendering anything in our system.
 	// Separating the render from anything else makes the code cleaner
@@ -22,6 +31,7 @@ namespace GTR {
 		bool debug_gbuffers;
 		bool render_to_full_screen_quad;
 		bool debug_ssao;
+		bool debug_probes_texture;
 		RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
@@ -30,13 +40,17 @@ namespace GTR {
 		FBO* gbuffers_fbo;
 		FBO* illumination_fbo;
 		FBO* ambient_occlusion_fbo;
+		FBO* irr_fbo;
+		Texture* probes_texture;
 
 		const int num_points = 64;
 		std::vector<Vector3> random_points;
 
-		float scale = 1.0f;
-		float average_lum = 1.0f;
-		float lum_white = 1.0f;
+		float scale = 1.36f;
+		float average_lum = 2.2f;
+		float lum_white = 0.6f;
+
+		std::vector<sProbe> probes;
 
 		Renderer();
 
@@ -46,6 +60,9 @@ namespace GTR {
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
 		void show_shadowmap(LightEntity* light);
+		void renderProbe(Vector3 pos, float size, float* coeffs);
+		void captureProbe(sProbe& probe, Scene* scene);
+		void generateProbes(Scene* scene);
 
 		//to render a whole prefab (with all its nodes)
 		void renderPrefab(const Matrix44& model, GTR::Prefab* prefab, Camera* camera);

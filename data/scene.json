@@ -282,7 +282,7 @@
 		{
 			"name":"pointlight15",
 			"type":"LIGHT",
-			"position":[-483,46,-229],
+			"position":[-490,46,-292],
 			"angle": 0,
 			"color":[1,0.2,0.1],
 			"intensity":4.5,

@@ -248,6 +248,7 @@ void Application::renderDebugGUI(void)
 	ImGui::Checkbox("Render GBuffers", &renderer->debug_gbuffers);
 	ImGui::Checkbox("Render SSAO", &renderer->debug_ssao);
 	ImGui::Checkbox("Render to full screen quad", &renderer->render_to_full_screen_quad);
+	ImGui::Checkbox("Render probes texture", &renderer->debug_probes_texture);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
 	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);
@@ -297,6 +298,7 @@ void Application::onKeyDown( SDL_KeyboardEvent event )
 		case SDLK_F1: render_debug = !render_debug; break;
 		case SDLK_f: camera->center.set(0, 0, 0); camera->updateViewMatrix(); break;
 		case SDLK_p: renderer->render_pipeline = renderer->render_pipeline == GTR::Renderer::FORWARD ? GTR::Renderer::DEFERRED : GTR::Renderer::FORWARD; break;
+		case SDLK_c: renderer->generateProbes(scene); break;
 		case SDLK_F5: Shader::ReloadAll(); break;
 		case SDLK_F6:
 			scene->clear();
