@@ -32,6 +32,7 @@ namespace GTR {
 		bool render_to_full_screen_quad;
 		bool debug_ssao;
 		bool debug_probes_texture;
+		bool use_irradiance;
 		RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
@@ -41,7 +42,7 @@ namespace GTR {
 		FBO* illumination_fbo;
 		FBO* ambient_occlusion_fbo;
 		FBO* irr_fbo;
-		Texture* probes_texture;
+		Texture* irradiance_texture;
 
 		const int num_points = 64;
 		std::vector<Vector3> random_points;
@@ -52,10 +53,15 @@ namespace GTR {
 
 		std::vector<sProbe> probes;
 
+		Vector3 irradiance_start_position;
+		Vector3 irradiance_end_position;
+		Vector3 irradiance_dimension;
+
 		Renderer();
 
 		void render_forward(Camera* camera, GTR::Scene* scene);
 		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene);
+		void render_irradiance(Camera* camera, GTR::Scene* scene);
 		void render_deferred(Camera* camera, GTR::Scene* scene);
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);

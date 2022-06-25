@@ -23,13 +23,14 @@ Renderer::Renderer()
 	illumination_fbo = nullptr;
 	ambient_occlusion_fbo = nullptr;
 	irr_fbo = nullptr;
-	probes_texture = nullptr;
+	irradiance_texture = nullptr;
 
 	use_single_pass = false;
 	debug_gbuffers = false;
 	render_to_full_screen_quad = false;
 	debug_ssao = false;
 	debug_probes_texture = false;
+	use_irradiance = true;
 	render_pipeline = DEFERRED;
 
 	random_points = generateSpherePoints(num_points, 1, false);
@@ -347,6 +348,10 @@ void Renderer::generateProbes(Scene* scene)
 	//define how many probes you want per dimension
 	Vector3 dim(10, 4, 10);
 
+	irradiance_start_position = start_pos;
+	irradiance_end_position = end_pos;
+	irradiance_dimension = dim;
+
 	//compute the vector from one corner to the other
 	Vector3 delta = (end_pos - start_pos);
 
@@ -380,9 +385,9 @@ void Renderer::generateProbes(Scene* scene)
 	}
 	std::cout<<"Done"<<std::endl;
 
-	delete probes_texture;
+	delete irradiance_texture;
 	
-	probes_texture = new Texture( 
+	irradiance_texture = new Texture( 
 	9, //9 coefficients per probe
 	probes.size(), //as many rows as probes
 	GL_RGB, //3 channels per coefficient
@@ -397,10 +402,10 @@ void Renderer::generateProbes(Scene* scene)
 		sh_data[i] = probes[i].sh;
 
 	//now upload the data to the GPU as a texture
-	probes_texture->upload( GL_RGB, GL_FLOAT, false, (uint8*)sh_data);
+	irradiance_texture->upload( GL_RGB, GL_FLOAT, false, (uint8*)sh_data);
 
 	//disable any texture filtering when reading
-	probes_texture->bind();
+	irradiance_texture->bind();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -727,7 +732,7 @@ void Renderer::render_mesh_with_material_to_gbuffer(const Matrix44 model, Mesh* 
 	shader->disable();
 }
 
-void Renderer::render_gbuffers_with_ambient(Camera* camera, Scene* scene)
+void Renderer:: render_gbuffers_with_ambient(Camera* camera, Scene* scene)
 {
 
 	glDisable(GL_DEPTH_TEST);
@@ -870,6 +875,48 @@ void Renderer::render_ambient_occlusion(Camera* camera, GTR::Scene* scene)
 	
 }
 
+void Renderer::render_irradiance(Camera* camera, GTR::Scene* scene)
+{
+	glDisable(GL_DEPTH_TEST);
+
+	Mesh* mesh = Mesh::getQuad();
+	Shader* shader  = Shader::Get("irradiance");
+	shader->enable();
+	
+	shader->setUniform("u_camera_position", camera->eye);
+
+	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
+	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
+	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
+	shader->setUniform("u_irradiance_texture", irradiance_texture, 4);
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+	
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+										 1.0 / static_cast<float>(Application::instance->window_height)));
+
+
+	shader->setUniform("u_irradiance_start", irradiance_start_position);
+	shader->setUniform("u_irradiance_end", irradiance_end_position);
+	shader->setUniform("u_irradiance_dimension",irradiance_dimension);
+
+	shader->setUniform("u_irr_normal_distance", 0.1f);
+	shader->setUniform("u_num_probes", irradiance_texture->height);
+	shader->setUniform("u_irr_delta", irradiance_end_position - irradiance_start_position);
+	
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	
+	
+
+	mesh->render(GL_TRIANGLES);
+
+}
+
 void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 {
 
@@ -897,8 +944,8 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 		renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
 	}
 
-	if(debug_probes_texture && probes_texture)
-		probes_texture->toViewport();
+	if(debug_probes_texture && irradiance_texture)
+		irradiance_texture->toViewport();
 	
 }
 
@@ -998,6 +1045,11 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	{
 		render_gbuffers_with_ambient(camera, scene);
 		render_gbuffers_with_illumination_geometry(camera, scene);
+	}
+
+	if(irradiance_texture && use_irradiance)
+	{
+		render_irradiance(camera, scene);
 	}
 	
 	gbuffers_fbo->depth_texture->copyTo(NULL);
