@@ -248,6 +248,7 @@ void Application::renderDebugGUI(void)
 	ImGui::Checkbox("Render GBuffers", &renderer->debug_gbuffers);
 	ImGui::Checkbox("Render SSAO", &renderer->debug_ssao);
 	ImGui::Checkbox("Render to full screen quad", &renderer->render_to_full_screen_quad);
+	ImGui::Checkbox("Render probes", &renderer->debug_probes);
 	ImGui::Checkbox("Render probes texture", &renderer->debug_probes_texture);
 	ImGui::Checkbox("Use irradiance", &renderer->use_irradiance);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);

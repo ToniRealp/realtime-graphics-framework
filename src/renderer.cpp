@@ -29,6 +29,7 @@ Renderer::Renderer()
 	debug_gbuffers = false;
 	render_to_full_screen_quad = false;
 	debug_ssao = false;
+	debug_probes = false;
 	debug_probes_texture = false;
 	use_irradiance = true;
 	render_pipeline = DEFERRED;
@@ -910,11 +911,11 @@ void Renderer::render_irradiance(Camera* camera, GTR::Scene* scene)
 	
 	
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
 	
 	
 
 	mesh->render(GL_TRIANGLES);
+	glDisable(GL_BLEND);
 
 }
 
@@ -940,9 +941,12 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 			}
 	}
 
-	for (auto& probe : probes)
+	if(debug_probes)
 	{
-		renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
+		for (auto& probe : probes)
+		{
+			renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
+		}
 	}
 
 	if(debug_probes_texture && irradiance_texture)
@@ -954,7 +958,7 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 {
 	
-	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
+	glClearColor(0, 0, 0, 1.0);
 
 	// Clear the color and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1002,7 +1006,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 	gbuffers_fbo->bind();
 
-	glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
+	// glClearColor(scene->background_color.x, scene->background_color.y, scene->background_color.z, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -1036,17 +1040,14 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	illumination_fbo->bind();
 
 	// glClearColor(0, scene->background_color.y, scene->background_color.z, 1.0);
-	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if(render_to_full_screen_quad){
-		render_gbuffers_with_ambient(camera, scene);
-		render_gbuffers_with_illumination_quad(camera, scene);
-	}
-	else
+	if(!use_irradiance)
 	{
 		render_gbuffers_with_ambient(camera, scene);
-		render_gbuffers_with_illumination_geometry(camera, scene);
 	}
+	
+	render_gbuffers_with_illumination_geometry(camera, scene);
 
 	if(irradiance_texture && use_irradiance)
 	{
@@ -1109,5 +1110,16 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		shader->setUniform("u_lumwhite2", lum_white);
 		illumination_fbo->color_textures[0]->toViewport(shader);
 	}
+
+	if(debug_probes)
+	{
+		for (auto& probe : probes)
+		{
+			renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
+		}
+	}
+
+	if(debug_probes_texture && irradiance_texture)
+		irradiance_texture->toViewport();
 	
 }

@@ -31,6 +31,7 @@ namespace GTR {
 		bool debug_gbuffers;
 		bool render_to_full_screen_quad;
 		bool debug_ssao;
+		bool debug_probes;
 		bool debug_probes_texture;
 		bool use_irradiance;
 		RenderPipeline render_pipeline;
