@@ -13,6 +13,14 @@
 			"position":[0,0.5,0]
 		},
 		{
+			"name":"sign",
+			"type":"PREFAB",
+			"filename":"prefabs/sign.glb",
+			"position":[118,48,-400],
+			"angle":120,
+			"scale":[60,60,60]
+		},
+		{
 			"name":"car1",
 			"type":"PREFAB",
 			"filename":"prefabs/gmc/scene.gltf",

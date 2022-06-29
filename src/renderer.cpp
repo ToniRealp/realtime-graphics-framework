@@ -807,6 +807,7 @@ void Renderer::render_gbuffers_with_illumination_geometry(Camera* camera, Scene*
 	shader->setUniform("u_gb0_texture", gbuffers_fbo->color_textures[0], 0);
 	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
 	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
+	shader->setUniform("u_gb3_texture", gbuffers_fbo->color_textures[3], 4);
 	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
 
 
@@ -969,7 +970,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 
 		//create 3 textures of 4 components
 		gbuffers_fbo->create( 	Application::instance->window_width, Application::instance->window_height, 
-		3, 			//three textures
+		4, 			//three textures
 		GL_RGBA, 		//four channels
 		GL_UNSIGNED_BYTE, //1 byte
 		true );		//add depth_texture

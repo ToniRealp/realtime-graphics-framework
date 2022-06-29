@@ -474,6 +474,7 @@ uniform float u_alpha_cutoff;
 layout(location = 0) out vec4 gb0;
 layout(location = 1) out vec4 gb1;
 layout(location = 2) out vec4 gb2;
+layout(location = 3) out vec4 gb3;
 
 void main()
 {
@@ -489,11 +490,12 @@ void main()
 	vec3 occlussion_metallic_roughness = texture(u_metallic_roughness_texture, uv).xyz;
 	float roughness = texture(u_metallic_roughness_texture, uv).z;
 	
-    vec3 emissive = texture(u_emissive_texture, uv).xyz;
+    vec3 emissive = texture(u_emissive_texture, uv).xyz * u_emissive;
 
 	gb0 = vec4(color.xyz, 1.0);
 	gb1 = vec4(N * 0.5 + vec3(0.5), 1.0);
 	gb2 = vec4(occlussion_metallic_roughness, 1.0);
+	gb3 = vec4(emissive, 1.0);
 }
 
 
@@ -645,6 +647,7 @@ uniform float u_alpha_cutoff;
 uniform sampler2D u_gb0_texture;
 uniform sampler2D u_gb1_texture;
 uniform sampler2D u_gb2_texture;
+uniform sampler2D u_gb3_texture;
 uniform sampler2D u_depth_texture;
 uniform sampler2D u_ssao_texture;
 
@@ -795,6 +798,9 @@ void main()
 	vec4 gb2_color = texture(u_gb2_texture, uv);
 	vec3 occlusion_metallic_roughness = gb2_color.xyz;
 	
+	vec4 gb3_color = texture(u_gb3_texture, uv);
+	vec4 emissive = vec4(pow(gb3_color.xyz, vec3(2.2)),1.0);
+	
 	float depth = texture(u_depth_texture, uv).x;
 	
 	vec4 screen_pos = vec4(uv.x*2.0-1.0, uv.y*2.0-1.0, depth*2.0-1.0, 1.0);
@@ -877,8 +883,7 @@ void main()
    //modulate direct light by light received
    
    float ambient_occlusion_factor = texture(u_ssao_texture, uv).x;
-   vec3 total_light = direct * lightParams;
-
+   vec3 total_light = direct * lightParams + emissive.xyz;
     
 
     //total_light += NdotL * u_light_color * attenuation_factor * spot_factor * shadow_factor;
