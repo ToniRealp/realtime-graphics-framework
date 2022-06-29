@@ -34,6 +34,7 @@ namespace GTR {
 		bool debug_probes;
 		bool debug_probes_texture;
 		bool use_irradiance;
+		
 		RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
@@ -43,6 +44,9 @@ namespace GTR {
 		FBO* illumination_fbo;
 		FBO* ambient_occlusion_fbo;
 		FBO* irr_fbo;
+		FBO* reflection_probe_fbo;
+
+		Texture* skybox;
 		Texture* irradiance_texture;
 
 		const int num_points = 64;
@@ -58,7 +62,9 @@ namespace GTR {
 		Vector3 irradiance_end_position;
 		Vector3 irradiance_dimension;
 
+
 		Renderer();
+		void renderSkybox(Camera* camera);
 
 		void render_forward(Camera* camera, GTR::Scene* scene);
 		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene);
@@ -70,6 +76,9 @@ namespace GTR {
 		void renderProbe(Vector3 pos, float size, float* coeffs);
 		void captureProbe(sProbe& probe, Scene* scene);
 		void generateProbes(Scene* scene);
+		void renderReflectionProbes(Camera* camera, Scene* scene);
+		void updateReflectionProbes(Scene* scene);
+		void captureReflectionProbe(Scene* scene, Texture* texture, Vector3 position);
 
 		//to render a whole prefab (with all its nodes)
 		void renderPrefab(const Matrix44& model, GTR::Prefab* prefab, Camera* camera);

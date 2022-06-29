@@ -32,11 +32,40 @@ Renderer::Renderer()
 	debug_probes = false;
 	debug_probes_texture = false;
 	use_irradiance = true;
+	
 	render_pipeline = DEFERRED;
 
 	random_points = generateSpherePoints(num_points, 1, false);
+
+	skybox = CubemapFromHDRE("data/night.hdre");
+	reflection_probe_fbo = new FBO();
 }
 
+void Renderer::renderSkybox(Camera* camera)
+{
+	Mesh* mesh = Mesh::Get("data/meshes/sphere.obj");
+	Shader* shader = Shader::Get("skybox");
+	shader->enable();
+
+	Matrix44 model;
+
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	
+	model.setTranslation(camera->eye.x, camera->eye.y, camera->eye.z);
+	model.scale(5, 5, 5);
+
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_camera_position", camera->eye);
+	shader->setUniform("u_model", model);
+	shader->setUniform("u_texture", skybox, 0);
+
+	mesh->render(GL_TRIANGLES);
+	shader->disable();
+
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+}
 
 void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 {
@@ -87,7 +116,6 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 		}
 	});
 
-
 	switch (render_pipeline) {
 		case FORWARD:
 			for (const auto& light : lights)
@@ -110,6 +138,7 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 	// show_shadowmap(lights[0]);
 	// glViewport(0, 0, Application::instance->window_width, Application::instance->window_height);
 }
+
 
 //renders all the prefab
 void Renderer::renderPrefab(const Matrix44& model, GTR::Prefab* prefab, Camera* camera)
@@ -414,6 +443,85 @@ void Renderer::generateProbes(Scene* scene)
 	delete[] sh_data;
 
 
+}
+
+void Renderer::updateReflectionProbes(Scene* scene)
+{
+
+	for (auto entity : scene->entities)
+	{
+		if(!entity->visible ||entity->entity_type != REFLECTION_PROBE)
+			continue;
+
+		auto reflectionProbe = dynamic_cast<ReflectionProbeEntity*>(entity);
+
+		if(!reflectionProbe->texture)
+		{
+			reflectionProbe->texture = new Texture();
+			reflectionProbe->texture->createCubemap(256, 256, NULL, GL_RGB, GL_UNSIGNED_INT, false);
+		}
+		captureReflectionProbe(scene, reflectionProbe->texture, reflectionProbe->model.getTranslation());
+	}
+	
+}
+
+void Renderer::captureReflectionProbe(Scene*scene, Texture* texture, Vector3 position)
+{
+	for (int i = 0; i < 6; ++i)
+	{
+		reflection_probe_fbo->setTexture(texture, i);
+
+		Camera camera;
+		camera.setPerspective(90,1,0.1,1000);
+		Vector3 eye = position;
+		Vector3 center = position + cubemapFaceNormals[i][2];
+		Vector3 up = cubemapFaceNormals[i][1];
+		camera.lookAt(eye, center, up);
+		camera.enable();
+
+		reflection_probe_fbo->bind();
+		render_forward(&camera, scene);
+		reflection_probe_fbo->unbind();
+
+		texture->generateMipmaps();
+		
+	}
+	
+}
+
+void Renderer::renderReflectionProbes(Camera* camera, Scene* scene)
+{
+	Mesh* mesh = Mesh::Get("data/meshes/sphere.obj");
+	Shader* shader = Shader::Get("reflection_probe");
+	shader->enable();
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_camera_position", camera->eye);
+
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+
+	
+	for (auto entity : scene->entities)
+	{
+		if(!entity->visible ||entity->entity_type != REFLECTION_PROBE)
+			continue;
+
+		ReflectionProbeEntity* reflectionProbe = dynamic_cast<ReflectionProbeEntity*>(entity);
+
+		if(!reflectionProbe->texture)
+			continue;
+		
+		Matrix44 model = entity->model;
+		model.scale(10,10,10);
+		
+		shader->setUniform("u_model", entity->model);
+		shader->setUniform("u_texture", reflectionProbe->texture, 0);
+
+		mesh->render(GL_TRIANGLES);
+	}
+	
+	shader->disable();
+	
 }
 
 
@@ -948,6 +1056,8 @@ void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 			renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
 		}
 	}
+
+	renderReflectionProbes(camera, scene);
 
 	if(debug_probes_texture && irradiance_texture)
 		irradiance_texture->toViewport();

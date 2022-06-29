@@ -14,6 +14,8 @@ ssao quad.vs ssao.fs
 gamma quad.vs gamma.fs
 probe basic.vs probe.fs
 irradiance quad.vs irradiance.fs
+skybox basic.vs skybox.fs
+reflection_probe basic.vs reflection_probe.fs
 
 \basic.vs
 
@@ -1233,4 +1235,46 @@ void main()
 
     vec3 color = pow(texture(u_gb0_texture, uv).xyz,vec3(2.2))* irradiance;
     FragColor = vec4(color, 1.0);
+}
+
+\skybox.fs
+
+#version 330 core
+
+in vec3 v_position;
+in vec3 v_world_position;
+in vec3 v_normal;
+in vec2 v_uv;
+
+uniform samplerCube u_texture;
+uniform vec3 u_camera_position;
+
+out vec4 FragColor;
+
+void main()
+{
+	vec3 V = v_world_position - u_camera_position;
+	FragColor = texture( u_texture, V );
+}
+
+\reflection_probe.fs
+
+#version 330 core
+
+in vec3 v_position;
+in vec3 v_world_position;
+in vec3 v_normal;
+in vec2 v_uv;
+
+uniform samplerCube u_texture;
+uniform vec3 u_camera_position;
+
+out vec4 FragColor;
+
+void main()
+{
+	vec3 V = v_world_position - u_camera_position;
+	vec3 N = normalize(v_normal);
+	vec3 R = reflect(V, N);
+	FragColor = textureLod( u_texture, R, 2.0 );
 }

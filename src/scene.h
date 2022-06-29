@@ -102,6 +102,16 @@ namespace GTR {
 		void configure(cJSON* json) override;
 	};
 
+	class ReflectionProbeEntity : public GTR::BaseEntity
+	{
+	public:
+		Texture* texture;
+		
+		ReflectionProbeEntity();
+		virtual void renderInMenu();
+		virtual void configure(cJSON* json);
+	};
+
 };
 
 #endif

@@ -208,6 +208,23 @@ void GTR::LightEntity::configure(cJSON* json)
 
 }
 
+GTR::ReflectionProbeEntity::ReflectionProbeEntity()
+{
+	entity_type = REFLECTION_PROBE;
+	texture = nullptr;
+}
+
+void GTR::ReflectionProbeEntity::renderInMenu()
+{
+	BaseEntity::renderInMenu();
+}
+
+void GTR::ReflectionProbeEntity::configure(cJSON* json)
+{
+	BaseEntity::configure(json);
+}
+
+
 void GTR::LightEntity::renderInMenu()
 {
 	BaseEntity::renderInMenu();

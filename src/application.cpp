@@ -69,6 +69,10 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	if (!scene->load("data/scene.json"))
 		exit(1);
 
+	auto probe = new GTR::ReflectionProbeEntity();
+	probe->model.setTranslation(40,40,40);
+	scene->addEntity(probe);
+
 	camera->lookAt(scene->main_camera.eye, scene->main_camera.center, Vector3(0, 1, 0));
 	camera->fov = scene->main_camera.fov;
 
@@ -301,6 +305,7 @@ void Application::onKeyDown( SDL_KeyboardEvent event )
 		case SDLK_f: camera->center.set(0, 0, 0); camera->updateViewMatrix(); break;
 		case SDLK_p: renderer->render_pipeline = renderer->render_pipeline == GTR::Renderer::FORWARD ? GTR::Renderer::DEFERRED : GTR::Renderer::FORWARD; break;
 		case SDLK_c: renderer->generateProbes(scene); break;
+		case SDLK_SPACE: renderer->updateReflectionProbes(scene);break;
 		case SDLK_F5: Shader::ReloadAll(); break;
 		case SDLK_F6:
 			scene->clear();
