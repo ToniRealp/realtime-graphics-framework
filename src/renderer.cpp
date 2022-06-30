@@ -1063,7 +1063,7 @@ void Renderer::render_volumetric_light(Camera* camera, GTR::Scene* scene)
 		shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(volumetric_fbo->color_textures[0]->width),
 											 1.0 / static_cast<float>(volumetric_fbo->color_textures[0]->height)));
 
-		shader->setUniform("u_air_density", scene->air_density);
+		shader->setUniform("u_air_density", scene->air_density * 0.001f);
 		
 
 		upload_light_to_shader(shader, directional_light);
@@ -1226,68 +1226,69 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	illumination_fbo->unbind();
 	glDisable(GL_BLEND);
 
-	// if(debug_gbuffers)
-	// {
-	// 	glDisable(GL_DEPTH_TEST);
-	// 	glDisable(GL_BLEND);
-	//
-	//
-	// 	const int height = Application::instance->window_height;
-	// 	const int width = Application::instance->window_width;
-	// 	
-	// 	//set an area of the screen and render fullscreen quad
-	// 	glViewport(0, height*0.5, width * 0.5, height * 0.5);
-	// 	gbuffers_fbo->color_textures[0]->toViewport(); //colorbuffer
-	// 	
-	// 	glViewport(width*0.5, height*0.5, width * 0.5, height * 0.5);
-	// 	gbuffers_fbo->color_textures[1]->toViewport(); //normalbuffer
-	//
-	// 	glViewport(width*0.5, height*0, width * 0.5, height * 0.5);
-	// 	gbuffers_fbo->color_textures[2]->toViewport(); //metallic and roughness
-	// 	
-	// 	//for the depth remember to linearize when displaying it
-	// 	glViewport(0, 0, width * 0.5, height * 0.5);
-	// 	Shader* depth_shader = Shader::getDefaultShader("linear_depth");
-	// 	depth_shader->enable();
-	// 	Vector2 near_far = Vector2(camera->near_plane, camera->far_plane);
-	// 	depth_shader->setUniform("u_camera_nearfar", near_far);
-	// 	gbuffers_fbo->depth_texture->toViewport(depth_shader);
-	// 	
-	// 	//set the viewport back to full screen
-	// 	glViewport(0,0,width,height);
-	// }else if(debug_ssao)
-	// {
-	// 	glDisable(GL_DEPTH_TEST);
-	// 	glDisable(GL_BLEND);
-	// 	ambient_occlusion_fbo->color_textures[0]->toViewport();
-	// }
-	// else
-	// {
-	// 	Shader* shader = Shader::Get("gamma");
-	// 	shader->enable();
-	// 	shader->setUniform("u_scale", scale);
-	// 	shader->setUniform("u_average_lum", average_lum);
-	// 	shader->setUniform("u_lumwhite2", lum_white);
-	// 	illumination_fbo->color_textures[0]->toViewport(shader);
-	// }
-	//
-	//
-	// if(debug_probes)
-	// {
-	// 	for (auto& probe : probes)
-	// 	{
-	// 		renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
-	// 	}
-	// }
-	//
-	// if(debug_probes_texture && irradiance_texture)
-	// 	irradiance_texture->toViewport();
-
+	if(debug_gbuffers)
+	{
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
 	
-	glDisable(GL_BLEND);
+	
+		const int height = Application::instance->window_height;
+		const int width = Application::instance->window_width;
+		
+		//set an area of the screen and render fullscreen quad
+		glViewport(0, height*0.5, width * 0.5, height * 0.5);
+		gbuffers_fbo->color_textures[0]->toViewport(); //colorbuffer
+		
+		glViewport(width*0.5, height*0.5, width * 0.5, height * 0.5);
+		gbuffers_fbo->color_textures[1]->toViewport(); //normalbuffer
+	
+		glViewport(width*0.5, height*0, width * 0.5, height * 0.5);
+		gbuffers_fbo->color_textures[2]->toViewport(); //metallic and roughness
+		
+		//for the depth remember to linearize when displaying it
+		glViewport(0, 0, width * 0.5, height * 0.5);
+		Shader* depth_shader = Shader::getDefaultShader("linear_depth");
+		depth_shader->enable();
+		Vector2 near_far = Vector2(camera->near_plane, camera->far_plane);
+		depth_shader->setUniform("u_camera_nearfar", near_far);
+		gbuffers_fbo->depth_texture->toViewport(depth_shader);
+		
+		//set the viewport back to full screen
+		glViewport(0,0,width,height);
+	}else if(debug_ssao)
+	{
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
+		ambient_occlusion_fbo->color_textures[0]->toViewport();
+	}
+	else
+	{
+		Shader* shader = Shader::Get("gamma");
+		shader->enable();
+		shader->setUniform("u_scale", scale);
+		shader->setUniform("u_average_lum", average_lum);
+		shader->setUniform("u_lumwhite2", lum_white);
+		illumination_fbo->color_textures[0]->toViewport(shader);
 
-	render_volumetric_light(camera, scene);
 
-	volumetric_fbo->color_textures[0]->toViewport();
+		render_volumetric_light(camera, scene);
+		glEnable(GL_BLEND);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		volumetric_fbo->color_textures[0]->toViewport();
+	}
+	
+	
+	if(debug_probes)
+	{
+		for (auto& probe : probes)
+		{
+			renderProbe(probe.pos, 2, probe.sh.coeffs[0].v);
+		}
+	}
+	
+	if(debug_probes_texture && irradiance_texture)
+		irradiance_texture->toViewport();
 	
 }
