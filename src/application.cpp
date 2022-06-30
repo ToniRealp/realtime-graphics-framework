@@ -261,6 +261,7 @@ void Application::renderDebugGUI(void)
 	ImGui::DragFloat("scale", &renderer->scale, 0.01);
 	ImGui::DragFloat("average luminance", &renderer->average_lum, 0.01);
 	ImGui::DragFloat("lum white", &renderer->lum_white, 0.01);
+	ImGui::SliderFloat("Air density", &scene->air_density, 0.0,  0.002);
 
 	//add info to the debug panel about the camera
 	if (ImGui::TreeNode(camera, "Camera")) {

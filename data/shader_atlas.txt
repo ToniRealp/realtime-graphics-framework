@@ -16,6 +16,7 @@ probe basic.vs probe.fs
 irradiance quad.vs irradiance.fs
 skybox basic.vs skybox.fs
 reflection_probe basic.vs reflection_probe.fs
+volumetric quad.vs volumetric.fs
 
 \basic.vs
 
@@ -1276,5 +1277,122 @@ void main()
 	vec3 V = v_world_position - u_camera_position;
 	vec3 N = normalize(v_normal);
 	vec3 R = reflect(V, N);
-	FragColor = textureLod( u_texture, R, 2.0 );
+	FragColor = textureLod( u_texture, R, 0 );
+}
+
+\volumetric.fs
+
+#version 330 core
+
+in vec2 v_uv;
+
+uniform vec3 u_camera_position;
+
+uniform sampler2D u_depth_texture;
+
+uniform mat4 u_viewprojection;
+uniform mat4 u_inverse_viewprojection;
+uniform vec2 u_iRes;
+
+uniform int u_light_type;
+uniform vec3 u_light_color;
+uniform vec3 u_light_position;
+uniform float u_light_max_distance;
+uniform vec3 u_light_direction;
+uniform float u_light_cone_angle;
+uniform float u_light_exp;
+
+uniform int u_light_casts_shadows;
+uniform sampler2D u_light_shadowmap;
+uniform mat4 u_shadow_viewproj;
+uniform float u_shadow_bias;
+
+out vec4 FragColor;
+
+const int SAMPLES = 64;
+
+float testShadowmap(vec3 pos)
+{
+    //project our 3D position to the shadowmap
+    vec4 proj_pos = u_shadow_viewproj * vec4(pos,1.0);
+
+    //from homogeneus space to clip space
+    vec2 shadow_uv = proj_pos.xy / proj_pos.w;
+
+    //from clip space to uv space
+    shadow_uv = shadow_uv * 0.5 + vec2(0.5);
+
+    //get point depth [-1 .. +1] in non-linear space
+    float real_depth = (proj_pos.z - u_shadow_bias) / proj_pos.w;
+
+    //normalize from [-1..+1] to [0..+1] still non-linear
+    real_depth = real_depth * 0.5 + 0.5;
+
+    //read depth from depth buffer in [0..+1] non-linear
+    float shadow_depth = texture( u_light_shadowmap, shadow_uv).x;
+
+    //compute final shadow factor by comparing
+    float shadow_factor = 1.0;
+
+    //we can compare them, even if they are not linear
+    if( shadow_depth < real_depth )
+        shadow_factor = 0.0;
+
+    return shadow_factor;
+}
+
+void main()
+{
+
+    vec2 uv = gl_FragCoord.xy * u_iRes.xy;
+
+	
+	float depth = texture( u_depth_texture, uv ).x;
+	vec4 screen_pos = vec4(uv.x*2.0-1.0, uv.y*2.0-1.0, depth*2.0-1.0, 1.0);
+    vec4 proj_worldpos = u_inverse_viewprojection * screen_pos;
+	vec3 world_position = proj_worldpos.xyz / proj_worldpos.w;
+	
+    
+    //compute ray info
+    vec3 ray_start = u_camera_position;
+    vec3 ray_dir = ( world_position - ray_start );
+    float ray_length = length(ray_dir);
+    ray_dir /= ray_length;
+    ray_dir = normalize(ray_dir);
+    ray_length = min( 500.0, ray_length ); //max ray
+    
+    float step_dist = ray_length / float(SAMPLES);
+    
+    vec3 current_pos = ray_start;
+    vec3 ray_offset = ray_dir * step_dist;
+    
+    //how visible is the point at the end of the ray
+    float transparency = 1.0;
+    
+    //how much transparency gets removed per world unit of the ray
+    float air_density = 0.001;
+
+    vec3 irradiance = vec3(0.0);
+    
+    for(int i = 0; i < SAMPLES; ++i)
+    {
+    	//compute illumination in this point
+        //...
+        vec3 light = u_light_color * testShadowmap(current_pos);
+    
+        //accumulate the amount of light
+        irradiance += light * transparency * (air_density * step_dist);
+
+        //reduce visibility
+        transparency -= air_density * step_dist;
+    
+        //too dense, nothing can be seen behind
+        if( transparency < 0.001 )
+            break;
+
+    	//advance to next position
+    	current_pos.xyz += ray_offset;
+    }
+
+    FragColor = vec4(irradiance, transparency);
 }

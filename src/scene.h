@@ -22,13 +22,14 @@ namespace GTR {
 
 		Vector3 background_color;
 		Vector3 ambient_light;
+		float air_density;
 		Camera main_camera;
 
 		Scene();
 
 		std::string filename;
 		std::vector<BaseEntity*> entities;
-
+		
 		void clear();
 		void addEntity(BaseEntity* entity);
 
@@ -91,6 +92,7 @@ namespace GTR {
 		float cone_angle;
 		float cone_exp;
 		float shadow_bias;
+		bool volumetric;
 
 		FBO* fbo;
 		Texture* shadowmap;

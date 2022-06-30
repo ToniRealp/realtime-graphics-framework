@@ -39,12 +39,14 @@ namespace GTR {
 
 		std::vector<LightEntity*> lights;
 		std::vector<render_call> render_calls;
+		LightEntity* directional_light;
 
 		FBO* gbuffers_fbo;
 		FBO* illumination_fbo;
 		FBO* ambient_occlusion_fbo;
 		FBO* irr_fbo;
 		FBO* reflection_probe_fbo;
+		FBO* volumetric_fbo;
 
 		Texture* skybox;
 		Texture* irradiance_texture;
@@ -69,6 +71,7 @@ namespace GTR {
 		void render_forward(Camera* camera, GTR::Scene* scene);
 		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene);
 		void render_irradiance(Camera* camera, GTR::Scene* scene);
+		void render_volumetric_light(Camera* camera, GTR::Scene* scene);
 		void render_deferred(Camera* camera, GTR::Scene* scene);
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);

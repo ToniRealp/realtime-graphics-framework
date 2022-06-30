@@ -10,6 +10,7 @@ GTR::Scene* GTR::Scene::instance = NULL;
 GTR::Scene::Scene()
 {
 	instance = this;
+	air_density = 0.001;
 }
 
 void GTR::Scene::clear()
@@ -198,6 +199,7 @@ void GTR::LightEntity::configure(cJSON* json)
 	cone_exp = readJSONNumber(json, "cone_exp", cone_exp);
 	cast_shadows = readJSONBool(json, "cast_shadows", false);
 	shadow_bias = readJSONNumber(json, "shadow_bias", shadow_bias);
+	volumetric = readJSONBool(json, "volumetric", false);
 	std::string raw_light_type = readJSONString(json, "light_type", "");
 	if (raw_light_type == "POINT")
 		light_type = point;
