@@ -209,10 +209,10 @@
 		{
 			"name":"decal",
 			"type":"DECAL",
-			"position":[180,120,12],
+			"position":[180,160,12],
 			"scale": [20,20,20],
 			"filename": "data/textures/decal.png",
-			"rotation": [0,0,0,0]
+			"rotation": [0.7, 0,-0.7,0]
 		}
 	]
 }

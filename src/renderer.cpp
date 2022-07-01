@@ -34,7 +34,7 @@ Renderer::Renderer()
 	debug_ssao = false;
 	debug_probes = false;
 	debug_probes_texture = false;
-	use_irradiance = true;
+	use_irradiance = false;
 	use_volumetric_light = true;
 
 	directional_light = nullptr;
@@ -455,6 +455,8 @@ void Renderer::generateProbes(Scene* scene)
 	irradiance_texture->bind();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	irradiance_texture->unbind();
 
 	//always free memory after allocating it!!!
 	delete[] sh_data;
@@ -1016,7 +1018,7 @@ void Renderer::render_irradiance(Camera* camera, GTR::Scene* scene)
 	shader->setUniform("u_gb1_texture", gbuffers_fbo->color_textures[1], 1);
 	shader->setUniform("u_gb2_texture", gbuffers_fbo->color_textures[2], 2);
 	shader->setUniform("u_depth_texture", gbuffers_fbo->depth_texture, 3);
-	shader->setUniform("u_irradiance_texture", irradiance_texture, 4);
+	shader->setUniform("u_irradiance_texture", irradiance_texture, 5);
 
 	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
 	inverse_view_projection.inverse();
