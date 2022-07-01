@@ -24,6 +24,7 @@ Renderer::Renderer()
 	ambient_occlusion_fbo = nullptr;
 	irr_fbo = nullptr;
 	volumetric_fbo = nullptr;
+	decals_fbo = nullptr;
 	
 	irradiance_texture = nullptr;
 
@@ -34,6 +35,7 @@ Renderer::Renderer()
 	debug_probes = false;
 	debug_probes_texture = false;
 	use_irradiance = true;
+	use_volumetric_light = true;
 
 	directional_light = nullptr;
 	
@@ -43,6 +45,8 @@ Renderer::Renderer()
 
 	skybox = CubemapFromHDRE("data/night.hdre");
 	reflection_probe_fbo = new FBO();
+
+	cube.createCube();
 }
 
 void Renderer::renderSkybox(Camera* camera)
@@ -75,6 +79,7 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 {
 	lights.clear();
 	render_calls.clear();
+	decals.clear();
 	//set the clear color (the background color)
 
 	//render entities
@@ -97,6 +102,11 @@ void Renderer::renderScene(GTR::Scene* scene, Camera* camera)
 			const auto pent = dynamic_cast<GTR::PrefabEntity*>(ent);
 			if (pent->prefab)
 				renderPrefab(ent->model, pent->prefab, camera);
+		}
+		else if (ent->entity_type == DECAL)
+		{
+			const auto decal = dynamic_cast<GTR::DecalEntity*>(ent);
+			decals.push_back(decal);
 		}
 	}
 
@@ -1075,6 +1085,68 @@ void Renderer::render_volumetric_light(Camera* camera, GTR::Scene* scene)
 		volumetric_fbo->unbind();
 }
 
+
+void Renderer::render_decals(Camera* camera, Scene* scene)
+{
+
+	gbuffers_fbo->color_textures[0]->copyTo(decals_fbo->color_textures[0]);
+	gbuffers_fbo->color_textures[1]->copyTo(decals_fbo->color_textures[1]);
+	gbuffers_fbo->color_textures[2]->copyTo(decals_fbo->color_textures[2]);
+
+	decals_fbo->bind();
+	gbuffers_fbo->depth_texture->copyTo(NULL);
+	decals_fbo->unbind();
+
+	gbuffers_fbo->bind();
+
+	glDisable(GL_DEPTH_TEST);
+	
+	Shader* shader  = Shader::Get("decal");
+	shader->enable();
+	
+	shader->setUniform("u_camera_position", camera->eye);
+
+	shader->setUniform("u_gb0_texture", decals_fbo->color_textures[0], 0);
+	shader->setUniform("u_gb1_texture", decals_fbo->color_textures[1], 1);
+	shader->setUniform("u_gb2_texture", decals_fbo->color_textures[2], 2);
+	shader->setUniform("u_depth_texture", decals_fbo->depth_texture, 3);
+
+
+	Matrix44 inverse_view_projection = camera->viewprojection_matrix;
+	inverse_view_projection.inverse();
+	
+	shader->setUniform("u_inverse_viewprojection", inverse_view_projection);
+	shader->setUniform("u_iRes", Vector2(1.0 / static_cast<float>(Application::instance->window_width),
+										 1.0 / static_cast<float>(Application::instance->window_height)));
+
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glEnable(GL_CULL_FACE);
+
+	for (const auto entity : decals)
+	{
+		const auto decal = dynamic_cast<DecalEntity*>(entity);
+
+		Texture* decal_texture = Texture::Get(decal->filename.c_str());
+		if(!decal_texture)
+			continue;
+		
+		shader->setUniform("u_decal_texture", decal_texture, 5);
+		
+		shader->setUniform("u_model", decal->model);
+		Matrix44 imodel = decal->model;
+		imodel.inverse();
+		shader->setUniform("u_imodel", imodel);
+		cube.render(GL_TRIANGLES);
+	}
+	glDisable(GL_BLEND);
+	
+	gbuffers_fbo->unbind();
+}
+
 void Renderer::render_forward(Camera* camera, GTR::Scene* scene)
 {
 
@@ -1138,6 +1210,18 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		true );		//add depth_texture
 	}
 
+	if(!decals_fbo)
+	{
+		decals_fbo = new FBO();
+
+		//create 3 textures of 4 components
+		decals_fbo->create( 	Application::instance->window_width, Application::instance->window_height, 
+		4, 			//three textures
+		GL_RGBA, 		//four channels
+		GL_UNSIGNED_BYTE, //1 byte
+		true );		//add depth_texture
+	}
+
 	if(!illumination_fbo)
 	{
 		illumination_fbo = new FBO();
@@ -1183,6 +1267,9 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 
 	gbuffers_fbo->unbind();
+
+	if(!decals.empty())
+		render_decals(camera, scene);
 	
 
 	ambient_occlusion_fbo->bind();
@@ -1206,6 +1293,7 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 	}
 	
 	render_gbuffers_with_illumination_geometry(camera, scene);
+	
 
 	if(irradiance_texture && use_irradiance)
 	{
@@ -1270,13 +1358,16 @@ void Renderer::render_deferred(Camera* camera, GTR::Scene* scene)
 		shader->setUniform("u_lumwhite2", lum_white);
 		illumination_fbo->color_textures[0]->toViewport(shader);
 
+		if(use_volumetric_light)
+		{
+			render_volumetric_light(camera, scene);
+			glEnable(GL_BLEND);
 
-		render_volumetric_light(camera, scene);
-		glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		volumetric_fbo->color_textures[0]->toViewport();
+			volumetric_fbo->color_textures[0]->toViewport();
+			
+		}
 	}
 	
 	

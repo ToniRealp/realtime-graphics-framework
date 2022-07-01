@@ -205,6 +205,14 @@
 			"max_dist":1000,
 			"cast_shadows": true,
 			"light_type":"DIRECTIONAL"
+		},
+		{
+			"name":"decal",
+			"type":"DECAL",
+			"position":[180,120,12],
+			"scale": [20,20,20],
+			"filename": "data/textures/decal.png",
+			"rotation": [0,0,0,0]
 		}
 	]
 }

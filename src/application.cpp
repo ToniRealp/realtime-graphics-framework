@@ -255,6 +255,7 @@ void Application::renderDebugGUI(void)
 	ImGui::Checkbox("Render probes", &renderer->debug_probes);
 	ImGui::Checkbox("Render probes texture", &renderer->debug_probes_texture);
 	ImGui::Checkbox("Use irradiance", &renderer->use_irradiance);
+	ImGui::Checkbox("Use volumetric light", &renderer->use_volumetric_light);
 	ImGui::ColorEdit3("BG color", scene->background_color.v);
 	ImGui::ColorEdit3("Ambient Light", scene->ambient_light.v);
 	ImGui::Combo("Pipeline", reinterpret_cast<int*>(&renderer->render_pipeline),"Forward\0Deferred\0", 2);

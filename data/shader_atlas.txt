@@ -17,6 +17,7 @@ irradiance quad.vs irradiance.fs
 skybox basic.vs skybox.fs
 reflection_probe basic.vs reflection_probe.fs
 volumetric quad.vs volumetric.fs
+decal basic.vs decal.fs
 
 \basic.vs
 
@@ -1397,4 +1398,54 @@ void main()
     }
 
     FragColor = vec4(irradiance, 1.0 - transparency);
+}
+
+\decal.fs
+
+#version 330 core
+
+in vec2 v_uv;
+
+uniform vec3 u_camera_position;
+
+uniform sampler2D u_gb0_texture;
+uniform sampler2D u_gb1_texture;
+uniform sampler2D u_gb2_texture;
+uniform sampler2D u_depth_texture;
+uniform sampler2D u_decal_texture;
+
+uniform mat4 u_viewprojection;
+uniform mat4 u_inverse_viewprojection;
+uniform vec2 u_iRes;
+
+uniform mat4 u_imodel;
+
+out vec4 FragColor;
+
+
+void main()
+{
+
+    vec2 uv = gl_FragCoord.xy * u_iRes.xy;
+
+	
+	float depth = texture( u_depth_texture, uv ).x;
+	vec4 screen_pos = vec4(uv.x*2.0-1.0, uv.y*2.0-1.0, depth*2.0-1.0, 1.0);
+    vec4 proj_worldpos = u_inverse_viewprojection * screen_pos;
+	vec3 world_position = proj_worldpos.xyz / proj_worldpos.w;
+	
+	vec3 localpos = (u_imodel *vec4(world_position, 1.0)).xyz;
+	
+	if( localpos.x < -1.0 || localpos.x >1.0 || 
+	    localpos.y < -1.0 || localpos.y >1.0 ||
+	    localpos.z < -1.0 || localpos.z >1.0 )
+	        discard;
+	        
+	vec2 decal_uv = localpos.xz*0.25+vec2(0.25);
+	vec4 color = texture(u_decal_texture, decal_uv);
+	
+	//vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+	//color.xyz = vec3(depth);
+
+    FragColor = color;
 }

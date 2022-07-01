@@ -43,7 +43,7 @@ namespace GTR {
 		LIGHT = 2,
 		CAMERA = 3,
 		REFLECTION_PROBE = 4,
-		DECALL = 5
+		DECAL = 5
 	};
 
 	class Prefab;
@@ -110,6 +110,16 @@ namespace GTR {
 		Texture* texture;
 		
 		ReflectionProbeEntity();
+		virtual void renderInMenu();
+		virtual void configure(cJSON* json);
+	};
+
+	class DecalEntity : public GTR::BaseEntity
+	{
+	public:
+		std::string filename;
+		
+		DecalEntity();
 		virtual void renderInMenu();
 		virtual void configure(cJSON* json);
 	};

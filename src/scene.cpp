@@ -131,6 +131,8 @@ GTR::BaseEntity* GTR::Scene::createEntity(std::string type)
 		return new GTR::PrefabEntity();
 	else if (type == "LIGHT")
 		return new GTR::LightEntity();
+	else if (type == "DECAL")
+		return new GTR::DecalEntity();
 	return NULL;
 }
 
@@ -224,6 +226,24 @@ void GTR::ReflectionProbeEntity::renderInMenu()
 void GTR::ReflectionProbeEntity::configure(cJSON* json)
 {
 	BaseEntity::configure(json);
+}
+
+GTR::DecalEntity::DecalEntity()
+{
+	entity_type = DECAL;
+}
+
+void GTR::DecalEntity::renderInMenu()
+{
+	BaseEntity::renderInMenu();
+}
+
+void GTR::DecalEntity::configure(cJSON* json)
+{
+	if (cJSON_GetObjectItem(json, "filename"))
+	{
+		filename = cJSON_GetObjectItem(json, "filename")->valuestring;
+	}
 }
 
 

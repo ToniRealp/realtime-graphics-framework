@@ -1,6 +1,7 @@
 #pragma once
 #include "prefab.h"
 #include "sphericalharmonics.h"
+#include "mesh.h"
 
 //forward declarations
 class Camera;
@@ -34,10 +35,12 @@ namespace GTR {
 		bool debug_probes;
 		bool debug_probes_texture;
 		bool use_irradiance;
+		bool use_volumetric_light;
 		
 		RenderPipeline render_pipeline;
 
 		std::vector<LightEntity*> lights;
+		std::vector<DecalEntity*> decals;
 		std::vector<render_call> render_calls;
 		LightEntity* directional_light;
 
@@ -47,6 +50,7 @@ namespace GTR {
 		FBO* irr_fbo;
 		FBO* reflection_probe_fbo;
 		FBO* volumetric_fbo;
+		FBO* decals_fbo;
 
 		Texture* skybox;
 		Texture* irradiance_texture;
@@ -64,6 +68,8 @@ namespace GTR {
 		Vector3 irradiance_end_position;
 		Vector3 irradiance_dimension;
 
+		Mesh cube;
+
 
 		Renderer();
 		void renderSkybox(Camera* camera);
@@ -72,6 +78,7 @@ namespace GTR {
 		void render_ambient_occlusion(Camera* camera, GTR::Scene* scene);
 		void render_irradiance(Camera* camera, GTR::Scene* scene);
 		void render_volumetric_light(Camera* camera, GTR::Scene* scene);
+		void render_decals(Camera* camera, Scene* scene);
 		void render_deferred(Camera* camera, GTR::Scene* scene);
 		//renders several elements of the scene
 		void renderScene(GTR::Scene* scene, Camera* camera);
